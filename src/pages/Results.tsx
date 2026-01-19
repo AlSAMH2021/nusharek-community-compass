@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
+import { exportResultsToPDF } from "@/utils/pdfExport";
 import { 
   BarChart3, 
   TrendingUp, 
@@ -15,7 +16,8 @@ import {
   ArrowLeft,
   Download,
   Loader2,
-  Award
+  Award,
+  FileDown
 } from "lucide-react";
 
 interface Assessment {
@@ -108,8 +110,10 @@ function generateRecommendations(dimensionScores: DimensionScore[]) {
 export default function Results() {
   const { assessmentId } = useParams<{ assessmentId: string }>();
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [dimensionScores, setDimensionScores] = useState<DimensionScore[]>([]);
+  const [organization, setOrganization] = useState<{ name: string; name_en?: string | null; sector?: string | null } | null>(null);
 
   useEffect(() => {
     async function fetchResults() {
@@ -128,6 +132,19 @@ export default function Results() {
       }
 
       setAssessment(assessmentData);
+
+      // Fetch organization details
+      if (assessmentData.organization_id) {
+        const { data: orgData } = await supabase
+          .from("organizations")
+          .select("name, name_en, sector")
+          .eq("id", assessmentData.organization_id)
+          .single();
+        
+        if (orgData) {
+          setOrganization(orgData);
+        }
+      }
 
       const { data: scoresData, error: sError } = await supabase
         .from("dimension_scores")
@@ -202,6 +219,32 @@ export default function Results() {
             </p>
           </div>
           <div className="flex gap-3">
+            <Button
+              variant="default"
+              onClick={async () => {
+                setExporting(true);
+                try {
+                  await exportResultsToPDF(
+                    assessment,
+                    dimensionScores,
+                    strengths,
+                    opportunities,
+                    recommendations,
+                    organization
+                  );
+                } finally {
+                  setExporting(false);
+                }
+              }}
+              disabled={exporting}
+            >
+              {exporting ? (
+                <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+              ) : (
+                <FileDown className="ml-2 h-4 w-4" />
+              )}
+              تصدير PDF
+            </Button>
             <Button variant="outline" asChild>
               <Link to="/dashboard">
                 <ArrowLeft className="ml-2 h-4 w-4" />
