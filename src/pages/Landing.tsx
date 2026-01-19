@@ -246,7 +246,7 @@ export default function Landing() {
       <footer className="py-12 bg-secondary text-secondary-foreground">
         <div className="container">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <NusharekLogo size="sm" variant="full" />
+            <NusharekLogo size="sm" />
             <p className="text-sm text-secondary-foreground/70">
               © {new Date().getFullYear()} نُشارك - جميع الحقوق محفوظة
             </p>

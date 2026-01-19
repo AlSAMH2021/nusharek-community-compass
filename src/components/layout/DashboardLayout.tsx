@@ -57,7 +57,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         >
           {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
-        <NusharekLogo size="sm" variant="icon" />
+        <NusharekLogo size="sm" />
         <div className="w-10" /> {/* Spacer for centering */}
       </header>
 
