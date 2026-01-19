@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import OrganizationSetup from "./pages/OrganizationSetup";
 import Assessment from "./pages/Assessment";
 import Results from "./pages/Results";
+import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,7 +53,7 @@ const App = () => (
             } />
             <Route path="/reports" element={
               <ProtectedRoute>
-                <Dashboard />
+                <Reports />
               </ProtectedRoute>
             } />
             <Route path="/organization" element={
