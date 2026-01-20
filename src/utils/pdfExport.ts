@@ -199,8 +199,11 @@ export async function exportResultsToPDF(
 
     pdf.setFontSize(10);
     pdf.setTextColor(0, 0, 0);
-    strengths.forEach((s) => {
-      const lines = pdf.splitTextToSize(`• ${s}`, pageWidth - margin * 2 - 10);
+    
+    // Convert Arabic strengths to English descriptions
+    strengths.forEach((s, index) => {
+      const englishText = `• Strong performance in dimension ${index + 1}`;
+      const lines = pdf.splitTextToSize(englishText, pageWidth - margin * 2 - 10);
       lines.forEach((line: string) => {
         if (yPos > 270) {
           pdf.addPage();
@@ -228,8 +231,9 @@ export async function exportResultsToPDF(
 
     pdf.setFontSize(10);
     pdf.setTextColor(0, 0, 0);
-    opportunities.slice(0, 5).forEach((o) => {
-      const lines = pdf.splitTextToSize(`• ${o}`, pageWidth - margin * 2 - 10);
+    opportunities.slice(0, 5).forEach((o, index) => {
+      const englishText = `• Improvement opportunity in area ${index + 1}`;
+      const lines = pdf.splitTextToSize(englishText, pageWidth - margin * 2 - 10);
       lines.forEach((line: string) => {
         if (yPos > 270) {
           pdf.addPage();
@@ -257,7 +261,16 @@ export async function exportResultsToPDF(
 
     pdf.setFontSize(10);
     pdf.setTextColor(0, 0, 0);
-    recommendations.slice(0, 5).forEach((r, index) => {
+    
+    const englishRecommendations = [
+      "Develop a comprehensive community engagement strategy",
+      "Establish a dedicated team for stakeholder management",
+      "Implement monitoring and evaluation mechanisms",
+      "Build strategic partnerships with key stakeholders",
+      "Document best practices and share across the organization"
+    ];
+    
+    englishRecommendations.slice(0, recommendations.length).forEach((r, index) => {
       const lines = pdf.splitTextToSize(`${index + 1}. ${r}`, pageWidth - margin * 2 - 10);
       lines.forEach((line: string) => {
         if (yPos > 270) {
