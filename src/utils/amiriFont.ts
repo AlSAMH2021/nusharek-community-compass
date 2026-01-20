@@ -1,18 +1,32 @@
 // Amiri font loader for jsPDF Arabic support
-// We'll load the font from Google Fonts CDN and convert to base64
+// We serve the font locally from /public/fonts to avoid CORS/CSP issues.
+
+let cachedAmiriBase64: string | null = null;
 
 export async function loadAmiriFont(): Promise<string> {
-  const fontUrl = "https://fonts.gstatic.com/s/amiri/v27/J7aRnpd8CGxBHqUp.ttf";
-  
-  try {
-    const response = await fetch(fontUrl);
-    const arrayBuffer = await response.arrayBuffer();
-    const base64 = arrayBufferToBase64(arrayBuffer);
-    return base64;
-  } catch (error) {
-    console.error("Failed to load Amiri font:", error);
-    throw error;
+  if (cachedAmiriBase64) return cachedAmiriBase64;
+
+  const urls = [
+    "/fonts/Amiri-Regular.ttf",
+    // Fallback (in case local file isn't available for some reason)
+    "https://fonts.gstatic.com/s/amiri/v27/J7aRnpd8CGxBHqUp.ttf",
+  ];
+
+  let lastError: unknown;
+  for (const url of urls) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Failed to fetch font: ${url} (${response.status})`);
+      const arrayBuffer = await response.arrayBuffer();
+      cachedAmiriBase64 = arrayBufferToBase64(arrayBuffer);
+      return cachedAmiriBase64;
+    } catch (error) {
+      lastError = error;
+    }
   }
+
+  console.error("Failed to load Amiri font", lastError);
+  throw lastError;
 }
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {

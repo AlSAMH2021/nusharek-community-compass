@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { exportResultsToPDF } from "@/utils/pdfExport";
-import { 
-  BarChart3, 
-  TrendingUp, 
-  Target, 
-  Lightbulb, 
+import { toast } from "sonner";
+import {
+  BarChart3,
+  TrendingUp,
+  Target,
+  Lightbulb,
   AlertTriangle,
   CheckCircle2,
   ArrowLeft,
@@ -232,6 +233,10 @@ export default function Results() {
                     recommendations,
                     organization
                   );
+                  toast.success("تم تنزيل ملف PDF بنجاح");
+                } catch (err) {
+                  console.error("PDF export failed:", err);
+                  toast.error("تعذر تصدير ملف PDF. افتح وحدة التحكم لمعرفة السبب.");
                 } finally {
                   setExporting(false);
                 }
