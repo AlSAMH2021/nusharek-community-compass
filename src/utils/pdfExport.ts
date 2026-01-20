@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import { loadAmiriFont, processArabicText } from "./amiriFont";
 
 // Extend jsPDF type for autotable
 declare module "jspdf" {
@@ -57,37 +58,58 @@ export async function exportResultsToPDF(
     format: "a4",
   });
 
-  // Add Amiri font for Arabic support - we'll use a simple approach
-  pdf.setFont("helvetica");
+  // Load and add Amiri font for Arabic support
+  try {
+    const amiriFontBase64 = await loadAmiriFont();
+    pdf.addFileToVFS("Amiri-Regular.ttf", amiriFontBase64);
+    pdf.addFont("Amiri-Regular.ttf", "Amiri", "normal");
+  } catch (error) {
+    console.warn("Could not load Amiri font, falling back to helvetica:", error);
+  }
 
   const pageWidth = pdf.internal.pageSize.getWidth();
   const margin = 20;
   let yPos = 20;
 
-  // Helper function to add right-aligned Arabic text
-  const addRightAlignedText = (text: string, y: number, fontSize: number = 12) => {
+  // Helper function to add Arabic text (right-aligned)
+  const addArabicText = (text: string, y: number, fontSize: number = 12, align: "right" | "center" | "left" = "right") => {
+    pdf.setFont("Amiri", "normal");
     pdf.setFontSize(fontSize);
-    const textWidth = pdf.getTextWidth(text);
-    pdf.text(text, pageWidth - margin - textWidth, y);
+    const processedText = processArabicText(text);
+    
+    if (align === "center") {
+      const textWidth = pdf.getTextWidth(processedText);
+      pdf.text(processedText, (pageWidth - textWidth) / 2, y);
+    } else if (align === "right") {
+      pdf.text(processedText, pageWidth - margin, y, { align: "right" });
+    } else {
+      pdf.text(processedText, margin, y);
+    }
     return y + fontSize * 0.5;
   };
 
-  // Helper function to add centered text
-  const addCenteredText = (text: string, y: number, fontSize: number = 12) => {
+  // Helper function to add English text
+  const addEnglishText = (text: string, y: number, fontSize: number = 12, align: "right" | "center" | "left" = "left") => {
+    pdf.setFont("helvetica", "normal");
     pdf.setFontSize(fontSize);
-    const textWidth = pdf.getTextWidth(text);
-    pdf.text(text, (pageWidth - textWidth) / 2, y);
+    
+    if (align === "center") {
+      const textWidth = pdf.getTextWidth(text);
+      pdf.text(text, (pageWidth - textWidth) / 2, y);
+    } else if (align === "right") {
+      pdf.text(text, pageWidth - margin, y, { align: "right" });
+    } else {
+      pdf.text(text, margin, y);
+    }
     return y + fontSize * 0.5;
   };
 
-  // Title
-  pdf.setFontSize(24);
+  // Arabic Title
   pdf.setTextColor(59, 130, 246); // Primary blue
-  yPos = addCenteredText("Community Engagement Assessment Report", yPos, 20);
+  yPos = addArabicText("تقرير تقييم المشاركة المجتمعية", yPos, 22, "center");
   
-  pdf.setFontSize(14);
   pdf.setTextColor(100, 100, 100);
-  yPos = addCenteredText("Nusharek Platform", yPos + 10, 14);
+  yPos = addArabicText("منصة نُشارك", yPos + 12, 16, "center");
 
   // Divider line
   yPos += 10;
@@ -95,89 +117,103 @@ export async function exportResultsToPDF(
   pdf.line(margin, yPos, pageWidth - margin, yPos);
   yPos += 15;
 
-  // Organization Info
+  // Organization Info (Arabic)
   pdf.setTextColor(0, 0, 0);
-  pdf.setFontSize(12);
   
   if (organization) {
-    pdf.text(`Organization: ${organization.name_en || organization.name}`, margin, yPos);
-    yPos += 8;
+    yPos = addArabicText(`المنظمة: ${organization.name}`, yPos, 12, "right");
+    yPos += 4;
     if (organization.sector) {
-      pdf.text(`Sector: ${organization.sector}`, margin, yPos);
-      yPos += 8;
+      yPos = addArabicText(`القطاع: ${organization.sector}`, yPos, 12, "right");
+      yPos += 4;
     }
   }
 
   const completedDate = assessment.completed_at
-    ? new Date(assessment.completed_at).toLocaleDateString("en-US", {
+    ? new Date(assessment.completed_at).toLocaleDateString("ar-SA", {
         year: "numeric",
         month: "long",
         day: "numeric",
       })
-    : "In Progress";
-  pdf.text(`Assessment Date: ${completedDate}`, margin, yPos);
-  yPos += 15;
+    : "قيد التنفيذ";
+  yPos = addArabicText(`تاريخ التقييم: ${completedDate}`, yPos, 12, "right");
+  yPos += 12;
 
   // Overall Score Box
   pdf.setFillColor(240, 249, 255);
   pdf.setDrawColor(59, 130, 246);
-  pdf.roundedRect(margin, yPos, pageWidth - margin * 2, 35, 3, 3, "FD");
+  pdf.roundedRect(margin, yPos, pageWidth - margin * 2, 40, 3, 3, "FD");
   
-  yPos += 12;
-  pdf.setFontSize(14);
+  yPos += 15;
+  
+  // Score Section (Right side)
   pdf.setTextColor(59, 130, 246);
-  pdf.text("Overall Score", margin + 10, yPos);
+  addArabicText("الدرجة الإجمالية", yPos - 3, 14, "right");
   
-  pdf.setFontSize(28);
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(32);
   pdf.setTextColor(0, 0, 0);
-  pdf.text(`${Math.round(assessment.overall_score || 0)}%`, margin + 10, yPos + 15);
+  pdf.text(`${Math.round(assessment.overall_score || 0)}%`, pageWidth - margin - 5, yPos + 15, { align: "right" });
 
-  // Maturity Level
+  // Maturity Level (Left side)
   const maturity = assessment.maturity_level ? maturityLabels[assessment.maturity_level] : null;
-  pdf.setFontSize(14);
   pdf.setTextColor(59, 130, 246);
-  pdf.text("Maturity Level", pageWidth / 2, yPos);
+  addArabicText("مستوى النضج", yPos - 3, 14, "left");
   
-  pdf.setFontSize(20);
+  pdf.setFont("Amiri", "normal");
+  pdf.setFontSize(24);
   pdf.setTextColor(0, 0, 0);
-  pdf.text(maturity?.en || "—", pageWidth / 2, yPos + 15);
+  const maturityText = processArabicText(maturity?.ar || "—");
+  pdf.text(maturityText, margin + 5, yPos + 15);
 
-  yPos += 40;
+  yPos += 45;
 
   // Dimension Scores Section
-  pdf.setFontSize(16);
   pdf.setTextColor(59, 130, 246);
-  pdf.text("Dimension Scores", margin, yPos);
-  yPos += 8;
+  yPos = addArabicText("نتائج المعايير", yPos, 16, "right");
+  yPos += 5;
 
-  // Table data
+  // Table data with Arabic dimension names
   const tableData = dimensionScores.map((ds) => [
-    ds.dimension.order_index.toString(),
-    ds.dimension.name_en || ds.dimension.name_ar,
-    `${ds.score} / ${ds.max_possible_score}`,
+    ds.percentage >= 75 ? "ممتاز" : ds.percentage >= 50 ? "جيد" : ds.percentage >= 25 ? "يحتاج تحسين" : "ضعيف",
     `${Math.round(ds.percentage)}%`,
-    ds.percentage >= 75 ? "Excellent" : ds.percentage >= 50 ? "Good" : ds.percentage >= 25 ? "Needs Improvement" : "Weak",
+    `${ds.score} / ${ds.max_possible_score}`,
+    processArabicText(ds.dimension.name_ar),
+    ds.dimension.order_index.toString(),
   ]);
 
   pdf.autoTable({
     startY: yPos,
-    head: [["#", "Dimension", "Score", "Percentage", "Level"]],
+    head: [[
+      processArabicText("المستوى"),
+      processArabicText("النسبة"),
+      processArabicText("الدرجة"),
+      processArabicText("المعيار"),
+      "#"
+    ]],
     body: tableData,
     theme: "striped",
+    styles: {
+      font: "Amiri",
+      halign: "right",
+    },
     headStyles: {
       fillColor: [59, 130, 246],
       textColor: [255, 255, 255],
-      fontSize: 10,
+      fontSize: 11,
+      font: "Amiri",
+      halign: "right",
     },
     bodyStyles: {
-      fontSize: 9,
+      fontSize: 10,
+      font: "Amiri",
     },
     columnStyles: {
-      0: { cellWidth: 10 },
-      1: { cellWidth: 60 },
-      2: { cellWidth: 30 },
-      3: { cellWidth: 25 },
-      4: { cellWidth: 35 },
+      0: { cellWidth: 30 },
+      1: { cellWidth: 20, halign: "center" },
+      2: { cellWidth: 25, halign: "center" },
+      3: { cellWidth: 70 },
+      4: { cellWidth: 10, halign: "center" },
     },
     margin: { left: margin, right: margin },
   });
@@ -185,100 +221,90 @@ export async function exportResultsToPDF(
   yPos = pdf.lastAutoTable.finalY + 15;
 
   // Check if we need a new page
-  if (yPos > 220) {
+  if (yPos > 200) {
     pdf.addPage();
     yPos = 20;
   }
 
   // Strengths Section
   if (strengths.length > 0) {
-    pdf.setFontSize(14);
     pdf.setTextColor(34, 197, 94); // Green
-    pdf.text("Strengths", margin, yPos);
-    yPos += 8;
+    yPos = addArabicText("نقاط القوة", yPos, 16, "right");
+    yPos += 6;
 
-    pdf.setFontSize(10);
     pdf.setTextColor(0, 0, 0);
-    
-    // Convert Arabic strengths to English descriptions
-    strengths.forEach((s, index) => {
-      const englishText = `• Strong performance in dimension ${index + 1}`;
-      const lines = pdf.splitTextToSize(englishText, pageWidth - margin * 2 - 10);
+    strengths.forEach((s) => {
+      const processedText = processArabicText(`• ${s}`);
+      pdf.setFont("Amiri", "normal");
+      pdf.setFontSize(11);
+      const lines = pdf.splitTextToSize(processedText, pageWidth - margin * 2 - 10);
       lines.forEach((line: string) => {
         if (yPos > 270) {
           pdf.addPage();
           yPos = 20;
         }
-        pdf.text(line, margin + 5, yPos);
-        yPos += 6;
+        pdf.text(line, pageWidth - margin - 5, yPos, { align: "right" });
+        yPos += 7;
       });
     });
     yPos += 8;
   }
 
   // Check if we need a new page
-  if (yPos > 220) {
+  if (yPos > 200) {
     pdf.addPage();
     yPos = 20;
   }
 
   // Opportunities Section
   if (opportunities.length > 0) {
-    pdf.setFontSize(14);
     pdf.setTextColor(249, 115, 22); // Orange
-    pdf.text("Areas for Improvement", margin, yPos);
-    yPos += 8;
+    yPos = addArabicText("فرص التحسين", yPos, 16, "right");
+    yPos += 6;
 
-    pdf.setFontSize(10);
     pdf.setTextColor(0, 0, 0);
-    opportunities.slice(0, 5).forEach((o, index) => {
-      const englishText = `• Improvement opportunity in area ${index + 1}`;
-      const lines = pdf.splitTextToSize(englishText, pageWidth - margin * 2 - 10);
+    opportunities.slice(0, 5).forEach((o) => {
+      const processedText = processArabicText(`• ${o}`);
+      pdf.setFont("Amiri", "normal");
+      pdf.setFontSize(11);
+      const lines = pdf.splitTextToSize(processedText, pageWidth - margin * 2 - 10);
       lines.forEach((line: string) => {
         if (yPos > 270) {
           pdf.addPage();
           yPos = 20;
         }
-        pdf.text(line, margin + 5, yPos);
-        yPos += 6;
+        pdf.text(line, pageWidth - margin - 5, yPos, { align: "right" });
+        yPos += 7;
       });
     });
     yPos += 8;
   }
 
   // Check if we need a new page
-  if (yPos > 220) {
+  if (yPos > 200) {
     pdf.addPage();
     yPos = 20;
   }
 
   // Recommendations Section
   if (recommendations.length > 0) {
-    pdf.setFontSize(14);
     pdf.setTextColor(59, 130, 246); // Blue
-    pdf.text("Recommendations", margin, yPos);
-    yPos += 8;
+    yPos = addArabicText("التوصيات", yPos, 16, "right");
+    yPos += 6;
 
-    pdf.setFontSize(10);
     pdf.setTextColor(0, 0, 0);
-    
-    const englishRecommendations = [
-      "Develop a comprehensive community engagement strategy",
-      "Establish a dedicated team for stakeholder management",
-      "Implement monitoring and evaluation mechanisms",
-      "Build strategic partnerships with key stakeholders",
-      "Document best practices and share across the organization"
-    ];
-    
-    englishRecommendations.slice(0, recommendations.length).forEach((r, index) => {
-      const lines = pdf.splitTextToSize(`${index + 1}. ${r}`, pageWidth - margin * 2 - 10);
+    recommendations.slice(0, 5).forEach((r, index) => {
+      const processedText = processArabicText(`${index + 1}. ${r}`);
+      pdf.setFont("Amiri", "normal");
+      pdf.setFontSize(11);
+      const lines = pdf.splitTextToSize(processedText, pageWidth - margin * 2 - 10);
       lines.forEach((line: string) => {
         if (yPos > 270) {
           pdf.addPage();
           yPos = 20;
         }
-        pdf.text(line, margin + 5, yPos);
-        yPos += 6;
+        pdf.text(line, pageWidth - margin - 5, yPos, { align: "right" });
+        yPos += 7;
       });
       yPos += 2;
     });
@@ -288,16 +314,14 @@ export async function exportResultsToPDF(
   const pageCount = pdf.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     pdf.setPage(i);
-    pdf.setFontSize(8);
+    pdf.setFont("Amiri", "normal");
+    pdf.setFontSize(9);
     pdf.setTextColor(150, 150, 150);
-    pdf.text(
-      `Generated by Nusharek Platform - Page ${i} of ${pageCount}`,
-      pageWidth / 2 - 30,
-      285
-    );
+    const footerText = processArabicText(`منصة نُشارك - صفحة ${i} من ${pageCount}`);
+    pdf.text(footerText, pageWidth / 2, 285, { align: "center" });
   }
 
   // Save the PDF
-  const fileName = `assessment-report-${assessment.id.slice(0, 8)}-${new Date().toISOString().slice(0, 10)}.pdf`;
+  const fileName = `تقرير-التقييم-${assessment.id.slice(0, 8)}-${new Date().toISOString().slice(0, 10)}.pdf`;
   pdf.save(fileName);
 }
