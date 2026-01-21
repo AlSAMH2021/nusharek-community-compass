@@ -39,33 +39,15 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
   return btoa(binary);
 }
 
-// Helper to reverse Arabic text for proper RTL display in PDF
-export function reverseArabicText(text: string): string {
-  // Check if text contains Arabic characters
-  const arabicRegex = /[\u0600-\u06FF]/;
-  if (!arabicRegex.test(text)) {
-    return text;
-  }
-  
-  // Reverse the text for RTL display
-  return text.split("").reverse().join("");
+// Process Arabic text for PDF - NO reversal needed when using proper RTL font
+// jsPDF with embedded Arabic fonts like Amiri handles RTL correctly
+export function processArabicText(text: string): string {
+  // Simply return the text as-is - do NOT reverse characters
+  // The Amiri font and jsPDF handle Arabic RTL display correctly
+  return text;
 }
 
-// Process mixed Arabic/English text
-export function processArabicText(text: string): string {
-  const arabicRegex = /[\u0600-\u06FF]/;
-  if (!arabicRegex.test(text)) {
-    return text;
-  }
-  
-  // Split by words and process
-  const words = text.split(" ");
-  const processedWords = words.map(word => {
-    if (arabicRegex.test(word)) {
-      return word.split("").reverse().join("");
-    }
-    return word;
-  });
-  
-  return processedWords.reverse().join(" ");
+// Legacy function kept for compatibility - does nothing now
+export function reverseArabicText(text: string): string {
+  return text;
 }
