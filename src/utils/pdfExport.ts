@@ -1,15 +1,13 @@
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable, { type UserOptions } from "jspdf-autotable";
 import { loadAmiriFont, processArabicText } from "./amiriFont";
 
-// Extend jsPDF type for autotable
-// (Font APIs are already present in jsPDF types; we access them defensively at runtime.)
-declare module "jspdf" {
-  interface jsPDF {
-    autoTable: (options: unknown) => jsPDF;
-    lastAutoTable: { finalY: number };
-  }
-}
+type JsPdfWithAutoTable = jsPDF & {
+  // When plugin patches the prototype, this exists.
+  autoTable?: (options: UserOptions) => jsPDF;
+  // When using the functional API, plugin sets this.
+  lastAutoTable?: { finalY?: number };
+};
 
 interface DimensionScore {
   id: string;
@@ -69,7 +67,7 @@ export async function exportResultsToPDF(
     orientation: "portrait",
     unit: "mm",
     format: "a4",
-  });
+  }) as JsPdfWithAutoTable;
 
   let hasAmiri = false;
   try {
@@ -192,7 +190,7 @@ export async function exportResultsToPDF(
     ds.dimension.order_index.toString(),
   ]);
 
-  pdf.autoTable({
+  const tableOptions: UserOptions = {
     startY: yPos,
     head: [
       [
@@ -228,9 +226,17 @@ export async function exportResultsToPDF(
       4: { cellWidth: 10, halign: "center" },
     },
     margin: { left: margin, right: margin },
-  });
+  };
 
-  yPos = pdf.lastAutoTable.finalY + 15;
+  // Robust integration: prefer plugin method if it exists, otherwise use functional API.
+  if (typeof pdf.autoTable === "function") {
+    pdf.autoTable(tableOptions);
+  } else {
+    autoTable(pdf, tableOptions);
+  }
+
+  const finalY = pdf.lastAutoTable?.finalY;
+  yPos = (typeof finalY === "number" ? finalY : yPos) + 15;
 
   const ensurePage = () => {
     if (yPos > 200) {
