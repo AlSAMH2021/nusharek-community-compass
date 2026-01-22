@@ -4,48 +4,79 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { NusharekLogo } from "@/components/NusharekLogo";
 import { 
   Target, 
-  Eye, 
+  Goal, 
+  Layers, 
   Users, 
-  MessageCircle, 
-  Lightbulb, 
-  BarChart3,
+  Building, 
+  Pencil, 
+  Play, 
+  MessageSquare, 
+  ClipboardCheck, 
+  Eye, 
+  FileText,
   ArrowLeft,
   CheckCircle,
   Building2,
-  FileText,
-  TrendingUp
+  TrendingUp,
+  Lightbulb
 } from "lucide-react";
 
+// المحاور الـ 11 للتقييم حسب قاعدة البيانات
 const dimensions = [
   {
     icon: Target,
-    title: "الاستراتيجية والتخطيط",
-    description: "تقييم مدى دمج المشاركة المجتمعية في رؤية واستراتيجية المنظمة",
+    title: "تحديد المشكلة / القضية",
+    description: "تحديد القضية أو الموضوع محل إشراك المجتمع بوضوح",
   },
   {
-    icon: Eye,
-    title: "الشفافية والحوكمة",
-    description: "تقييم مستوى الانفتاح والمساءلة والممارسات الأخلاقية",
+    icon: Goal,
+    title: "تحديد الغرض والعناصر القابلة وغير القابلة للتفاوض",
+    description: "تحديد أهداف المشاركة والعناصر القابلة للتفاوض",
+  },
+  {
+    icon: Layers,
+    title: "تحديد مستوى المشاركة المجتمعية",
+    description: "اختيار مستوى المشاركة المناسب",
   },
   {
     icon: Users,
-    title: "الشمولية وسهولة الوصول",
-    description: "تقييم التنوع والمشاركة الخالية من العوائق",
+    title: "تحديد أصحاب المصلحة وبناء العلاقات",
+    description: "تحديد وبناء علاقات مع أصحاب المصلحة",
   },
   {
-    icon: MessageCircle,
-    title: "التواصل والمشاركة",
-    description: "تقييم قنوات التواصل وحلقات التغذية الراجعة والاستجابة",
+    icon: Building,
+    title: "الموارد والحوكمة",
+    description: "تخصيص الموارد وآليات الحوكمة",
   },
   {
-    icon: Lightbulb,
-    title: "التمكين والإبداع المشترك",
-    description: "تقييم مشاركة المجتمع في صنع القرار",
+    icon: Pencil,
+    title: "تصميم عملية المشاركة",
+    description: "تصميم عملية المشاركة بشكل مناسب",
   },
   {
-    icon: BarChart3,
-    title: "قياس الأثر والتقييم",
-    description: "تقييم تتبع النتائج والتعلم من المخرجات",
+    icon: Play,
+    title: "تنفيذ المشاركة المجتمعية",
+    description: "تنفيذ أنشطة المشاركة وفق الخطة",
+  },
+  {
+    icon: MessageSquare,
+    title: "التغذية الراجعة",
+    description: "توثيق وإبلاغ المشاركين بنتائج مشاركتهم",
+  },
+  {
+    icon: ClipboardCheck,
+    title: "التقييم والمراجعة",
+    description: "تقييم عملية المشاركة وقياس تحقيق الأهداف",
+  },
+  {
+    icon: Eye,
+    title: "المراقبة والمتابعة",
+    description: "متابعة نتائج المشاركة على المدى الطويل",
+  },
+  {
+    icon: FileText,
+    title: "التوثيق والتدقيق",
+    description: "توثيق جميع مراحل المشاركة المجتمعية",
   },
 ];
 
@@ -53,7 +84,7 @@ const features = [
   {
     icon: FileText,
     title: "تقييم ذاتي شامل",
-    description: "استبيان مفصّل يغطي جميع جوانب المشاركة المجتمعية",
+    description: "استبيان مفصّل يغطي جميع جوانب المشاركة المجتمعية عبر 11 محوراً",
   },
   {
     icon: TrendingUp,
@@ -67,11 +98,12 @@ const features = [
   },
 ];
 
+// مستويات النضج الأربعة حسب التقييم
 const maturityLevels = [
-  { level: "مبتدئ", range: "0-39%", color: "bg-level-beginner", description: "بداية الرحلة نحو المشاركة المجتمعية" },
-  { level: "نامٍ", range: "40-59%", color: "bg-level-developing", description: "تطوير القدرات والأنظمة الأساسية" },
-  { level: "متقدم", range: "60-79%", color: "bg-level-advanced", description: "ممارسات راسخة ومستدامة" },
-  { level: "رائد", range: "80-100%", color: "bg-level-leading", description: "نموذج يُحتذى به في المشاركة المجتمعية" },
+  { level: "مبتدئ", range: "0-39%", color: "bg-level-beginner", description: "بداية الرحلة نحو المشاركة المجتمعية الفعّالة" },
+  { level: "نامٍ", range: "40-59%", color: "bg-level-developing", description: "تطوير القدرات والأنظمة الأساسية للمشاركة" },
+  { level: "متقدم", range: "60-79%", color: "bg-level-advanced", description: "ممارسات راسخة ومستدامة في إشراك المجتمع" },
+  { level: "رائد", range: "80-100%", color: "bg-level-leading", description: "نموذج يُحتذى به في المشاركة المجتمعية المؤسسية" },
 ];
 
 export default function Landing() {
@@ -149,24 +181,24 @@ export default function Landing() {
       <section id="dimensions" className="py-20">
         <div className="container">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">محاور التقييم الستة</h2>
+            <h2 className="text-3xl font-bold mb-4">محاور التقييم الأحد عشر</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              نموذج شامل يغطي جميع جوانب المشاركة المجتمعية الفعّالة
+              نموذج شامل يغطي جميع مراحل دورة المشاركة المجتمعية الفعّالة
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {dimensions.map((dimension, index) => (
               <Card key={index} className="group hover:shadow-lg transition-all hover:-translate-y-1">
-                <CardHeader>
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
-                      <dimension.icon className="h-6 w-6" />
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors shrink-0">
+                      <dimension.icon className="h-5 w-5" />
                     </div>
-                    <CardTitle className="text-lg">{dimension.title}</CardTitle>
+                    <CardTitle className="text-base leading-tight">{dimension.title}</CardTitle>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-base">{dimension.description}</CardDescription>
+                <CardContent className="pt-0">
+                  <CardDescription className="text-sm">{dimension.description}</CardDescription>
                 </CardContent>
               </Card>
             ))}
