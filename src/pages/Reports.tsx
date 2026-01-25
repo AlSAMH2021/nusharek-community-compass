@@ -27,6 +27,7 @@ interface Assessment {
   maturity_level: string | null;
   created_at: string;
   completed_at: string | null;
+  responses_count?: number;
 }
 
 const maturityLabels: Record<string, { label: string; color: string }> = {
@@ -69,7 +70,7 @@ export default function Reports() {
           setOrganizationName(orgData.name);
         }
 
-        // Fetch all assessments
+        // Fetch all assessments with response counts
         const { data: assessmentData } = await supabase
           .from("assessments")
           .select("*")
@@ -77,7 +78,20 @@ export default function Reports() {
           .order("created_at", { ascending: false });
 
         if (assessmentData) {
-          setAssessments(assessmentData);
+          // For each in-progress assessment, check if it has responses
+          const assessmentsWithCounts = await Promise.all(
+            assessmentData.map(async (assessment) => {
+              if (assessment.status === "in_progress") {
+                const { count } = await supabase
+                  .from("assessment_responses")
+                  .select("*", { count: "exact", head: true })
+                  .eq("assessment_id", assessment.id);
+                return { ...assessment, responses_count: count || 0 };
+              }
+              return assessment;
+            })
+          );
+          setAssessments(assessmentsWithCounts);
         }
       }
       setLoading(false);
@@ -87,7 +101,8 @@ export default function Reports() {
   }, [user]);
 
   const completedAssessments = assessments.filter(a => a.status === "completed");
-  const inProgressAssessments = assessments.filter(a => a.status === "in_progress");
+  // Only show in-progress assessments that have at least one response (user has started answering)
+  const inProgressAssessments = assessments.filter(a => a.status === "in_progress" && (a.responses_count || 0) > 0);
 
   // Calculate trend between last two assessments
   const getTrend = (index: number) => {
