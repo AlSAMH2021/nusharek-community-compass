@@ -367,103 +367,50 @@ export async function exportResultsToPDF(
   // Sort dimension scores by percentage for recommendations (lowest first)
   const sortedByPriority = [...dimensionScores].sort((a, b) => a.percentage - b.percentage);
 
-  // ===================== PAGE 1: COVER PAGE =====================
-  // Full page purple background with gradient effect
-  pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+  // ===================== PAGE 1: COVER PAGE (Minimal Design) =====================
+  // Clean white background
+  pdf.setFillColor(255, 255, 255);
   pdf.rect(0, 0, pageWidth, pageHeight, "F");
 
-  // Darker bottom section for depth
-  pdf.setFillColor(colors.primaryDark[0], colors.primaryDark[1], colors.primaryDark[2]);
-  pdf.rect(0, pageHeight - 80, pageWidth, 80, "F");
-
-  // Decorative portal patterns
-  drawPortalPattern(pageWidth - 35, 45, 40);
-  drawPortalPattern(35, pageHeight - 100, 30);
-  
-  // Decorative lines
-  pdf.setDrawColor(255, 255, 255);
-  pdf.setLineWidth(0.3);
-  drawCornerDecoration(pageWidth - 30, 15, 25);
-  drawCornerDecoration(30, pageHeight - 25, 25, true);
-
-  // Logo safe area indicator (top section)
-  pdf.setFillColor(255, 255, 255);
-  pdf.setDrawColor(colors.primaryLight[0], colors.primaryLight[1], colors.primaryLight[2]);
-  
-  // Platform name at top
-  pdf.setTextColor(255, 255, 255);
+  // Nusharek logo/brand name at center-top
+  pdf.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   pdf.setFont(arabicFont, "normal");
-  pdf.setFontSize(16);
-  pdf.text(renderText("منصة نُشارك"), pageWidth / 2, 35, { align: "center" });
+  pdf.setFontSize(32);
+  pdf.text(renderText("نُشارك"), pageWidth / 2, 60, { align: "center" });
   
-  // Decorative line under platform name
-  pdf.setDrawColor(colors.gold[0], colors.gold[1], colors.gold[2]);
-  pdf.setLineWidth(1);
-  pdf.line(pageWidth / 2 - 25, 42, pageWidth / 2 + 25, 42);
+  // Small tagline
+  pdf.setFontSize(12);
+  pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+  pdf.text(renderText("منصة التقييم الذاتي للمشاركة المجتمعية"), pageWidth / 2, 72, { align: "center" });
 
-  // Main title - Large and prominent
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFont(arabicFont, "normal");
-  pdf.setFontSize(38);
-  pdf.text(renderText("تقرير نتائج تقييم النضج"), pageWidth / 2, pageHeight / 2 - 25, { align: "center" });
+  // Main title
+  pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+  pdf.setFontSize(28);
+  pdf.text(renderText("تقرير نتائج التقييم"), pageWidth / 2, pageHeight / 2 - 10, { align: "center" });
 
-  // Subtitle
-  pdf.setFontSize(20);
-  pdf.setTextColor(220, 220, 240);
-  pdf.text(renderText("المشاركة المجتمعية"), pageWidth / 2, pageHeight / 2 + 5, { align: "center" });
-
-  // Decorative gold line
-  pdf.setDrawColor(colors.gold[0], colors.gold[1], colors.gold[2]);
-  pdf.setLineWidth(2);
-  pdf.line(pageWidth / 2 - 60, pageHeight / 2 + 20, pageWidth / 2 + 60, pageHeight / 2 + 20);
-
-  // Organization info box
+  // Organization name
   if (organization) {
-    // Semi-transparent white box
-    pdf.setFillColor(255, 255, 255);
-    const orgBoxWidth = 150;
-    const orgBoxHeight = 50;
-    const orgBoxX = (pageWidth - orgBoxWidth) / 2;
-    const orgBoxY = pageHeight / 2 + 35;
-    pdf.roundedRect(orgBoxX, orgBoxY, orgBoxWidth, orgBoxHeight, 6, 6, "F");
-    
-    // Organization name
-    pdf.setFont(arabicFont, "normal");
-    pdf.setFontSize(14);
-    pdf.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-    pdf.text(renderText("الجهة المستفيدة"), pageWidth / 2, orgBoxY + 14, { align: "center" });
-    
     pdf.setFontSize(18);
-    pdf.setTextColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
-    pdf.text(renderText(organization.name), pageWidth / 2, orgBoxY + 30, { align: "center" });
+    pdf.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+    pdf.text(renderText(organization.name), pageWidth / 2, pageHeight / 2 + 15, { align: "center" });
     
-    // Organization type if available
+    // Organization type
     if (organization.type && orgTypeLabels[organization.type]) {
-      pdf.setFontSize(11);
+      pdf.setFontSize(12);
       pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-      pdf.text(renderText(orgTypeLabels[organization.type]), pageWidth / 2, orgBoxY + 42, { align: "center" });
+      pdf.text(renderText(orgTypeLabels[organization.type]), pageWidth / 2, pageHeight / 2 + 28, { align: "center" });
     }
   }
 
-  // Assessment date and type at bottom
+  // Date at bottom
   const coverDate = formatDate(assessment.completed_at);
-  
-  // Date box
-  pdf.setFillColor(255, 255, 255);
-  pdf.roundedRect(pageWidth / 2 - 50, pageHeight - 55, 100, 25, 4, 4, "F");
-  
-  pdf.setFontSize(10);
+  pdf.setFontSize(11);
   pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-  pdf.text(renderText("تاريخ التقييم"), pageWidth / 2, pageHeight - 47, { align: "center" });
-  
-  pdf.setFontSize(12);
-  pdf.setTextColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
-  pdf.text(renderText(coverDate), pageWidth / 2, pageHeight - 37, { align: "center" });
+  pdf.text(renderText(coverDate), pageWidth / 2, pageHeight - 40, { align: "center" });
 
-  // Copyright at very bottom
+  // Copyright
   pdf.setFontSize(9);
-  pdf.setTextColor(200, 200, 220);
-  pdf.text(renderText("جميع الحقوق محفوظة © منصة نُشارك"), pageWidth / 2, pageHeight - 15, { align: "center" });
+  pdf.text(renderText("جميع الحقوق محفوظة © منصة نُشارك"), pageWidth / 2, pageHeight - 25, { align: "center" });
 
   // ===================== PAGE 2: EXECUTIVE SUMMARY =====================
   pdf.addPage();
