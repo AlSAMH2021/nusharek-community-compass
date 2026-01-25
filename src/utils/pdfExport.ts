@@ -388,11 +388,11 @@ export async function exportResultsToPDF(
       reader.readAsDataURL(logoBlob);
     });
     
-    // Add logo image centered at top (width: 60mm, height auto-calculated to maintain aspect ratio)
-    const logoWidth = 80;
-    const logoHeight = 28; // Approximate height based on logo aspect ratio
+    // Add logo image centered at top (smaller size)
+    const logoWidth = 55;
+    const logoHeight = 19; // Approximate height based on logo aspect ratio
     const logoX = (pageWidth - logoWidth) / 2;
-    pdf.addImage(logoBase64, 'PNG', logoX, 45, logoWidth, logoHeight);
+    pdf.addImage(logoBase64, 'PNG', logoX, 50, logoWidth, logoHeight);
   } catch (logoError) {
     // Fallback to text if logo fails to load
     console.warn("Could not load logo image, falling back to text:", logoError);
