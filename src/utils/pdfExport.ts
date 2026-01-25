@@ -3,9 +3,7 @@ import autoTable, { type UserOptions } from "jspdf-autotable";
 import { loadAmiriFont, processArabicText } from "./amiriFont";
 
 type JsPdfWithAutoTable = jsPDF & {
-  // When plugin patches the prototype, this exists.
   autoTable?: (options: UserOptions) => jsPDF;
-  // When using the functional API, plugin sets this.
   lastAutoTable?: { finalY?: number };
 };
 
@@ -36,11 +34,11 @@ interface Organization {
   sector?: string | null;
 }
 
-const maturityLabels: Record<string, { ar: string; en: string }> = {
-  beginner: { ar: "ناشئ", en: "Beginner" },
-  developing: { ar: "متوسط", en: "Developing" },
-  advanced: { ar: "متقدم", en: "Advanced" },
-  leading: { ar: "رائد", en: "Leading" },
+// المستويات الثلاثة: أساسي (0-49%) - ناشئ (50-74%) - مثالي (75-100%)
+const maturityLabels: Record<string, { ar: string; en: string; color: number[] }> = {
+  beginner: { ar: "أساسي", en: "Basic", color: [239, 68, 68] },
+  developing: { ar: "ناشئ", en: "Emerging", color: [249, 115, 22] },
+  leading: { ar: "مثالي", en: "Ideal", color: [34, 197, 94] },
 };
 
 function downloadPdfBlob(blob: Blob, fileName: string) {
@@ -74,65 +72,88 @@ export async function exportResultsToPDF(
     const amiriFontBase64 = await loadAmiriFont();
 
     if (!pdf.addFileToVFS || !pdf.addFont) {
-      throw new Error("jsPDF font APIs not available (addFileToVFS/addFont)");
+      throw new Error("jsPDF font APIs not available");
     }
 
     pdf.addFileToVFS("Amiri-Regular.ttf", amiriFontBase64);
     pdf.addFont("Amiri-Regular.ttf", "Amiri", "normal");
     hasAmiri = true;
   } catch (error) {
-    // IMPORTANT: don't break export if the font cannot be loaded.
     console.warn("Could not load Amiri font, falling back to helvetica:", error);
   }
 
   const arabicFont = hasAmiri ? "Amiri" : "helvetica";
   const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
   const margin = 20;
-  let yPos = 20;
+  let yPos = 25;
 
-  const addArabicText = (
+  // Helper function for Arabic text
+  const renderText = (text: string): string => {
+    return hasAmiri ? processArabicText(text) : text;
+  };
+
+  const addText = (
     text: string,
     y: number,
     fontSize: number = 12,
-    align: "right" | "center" | "left" = "right"
-  ) => {
+    align: "right" | "center" | "left" = "right",
+    color: number[] = [0, 0, 0]
+  ): number => {
     pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(fontSize);
+    pdf.setTextColor(color[0], color[1], color[2]);
 
-    const processedText = hasAmiri ? processArabicText(text) : text; // if no Arabic font, don't mangle the string
+    const processed = renderText(text);
 
     if (align === "center") {
-      const textWidth = pdf.getTextWidth(processedText);
-      pdf.text(processedText, (pageWidth - textWidth) / 2, y);
+      pdf.text(processed, pageWidth / 2, y, { align: "center" });
     } else if (align === "right") {
-      pdf.text(processedText, pageWidth - margin, y, { align: "right" });
+      pdf.text(processed, pageWidth - margin, y, { align: "right" });
     } else {
-      pdf.text(processedText, margin, y);
+      pdf.text(processed, margin, y);
     }
 
     return y + fontSize * 0.5;
   };
 
+  const checkPageBreak = (neededSpace: number = 30): void => {
+    if (yPos > pageHeight - neededSpace) {
+      pdf.addPage();
+      yPos = 25;
+    }
+  };
+
+  // ===================== HEADER =====================
+  // Background header box
+  pdf.setFillColor(15, 23, 42);
+  pdf.rect(0, 0, pageWidth, 50, "F");
+
   // Title
-  pdf.setTextColor(59, 130, 246);
-  yPos = addArabicText("تقرير تقييم المشاركة المجتمعية", yPos, 22, "center");
-  pdf.setTextColor(100, 100, 100);
-  yPos = addArabicText("منصة نُشارك", yPos + 12, 16, "center");
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFont(arabicFont, "normal");
+  pdf.setFontSize(24);
+  pdf.text(renderText("تقرير تقييم المشاركة المجتمعية"), pageWidth / 2, 22, { align: "center" });
 
-  // Divider
-  yPos += 10;
-  pdf.setDrawColor(200, 200, 200);
-  pdf.line(margin, yPos, pageWidth - margin, yPos);
-  yPos += 15;
+  // Subtitle
+  pdf.setFontSize(14);
+  pdf.setTextColor(148, 163, 184);
+  pdf.text(renderText("منصة نُشارك"), pageWidth / 2, 35, { align: "center" });
 
-  // Organization Info
-  pdf.setTextColor(0, 0, 0);
+  yPos = 60;
+
+  // ===================== ORGANIZATION INFO =====================
+  pdf.setFillColor(248, 250, 252);
+  pdf.roundedRect(margin, yPos, pageWidth - margin * 2, 35, 3, 3, "F");
+
+  yPos += 12;
+
   if (organization) {
-    yPos = addArabicText(`المنظمة: ${organization.name}`, yPos, 12, "right");
-    yPos += 4;
+    addText(`المنظمة: ${organization.name}`, yPos, 13, "right", [30, 41, 59]);
+    yPos += 10;
     if (organization.sector) {
-      yPos = addArabicText(`القطاع: ${organization.sector}`, yPos, 12, "right");
-      yPos += 4;
+      addText(`القطاع: ${organization.sector}`, yPos, 11, "right", [100, 116, 139]);
+      yPos += 8;
     }
   }
 
@@ -143,92 +164,121 @@ export async function exportResultsToPDF(
         day: "numeric",
       })
     : "قيد التنفيذ";
-  yPos = addArabicText(`تاريخ التقييم: ${completedDate}`, yPos, 12, "right");
-  yPos += 12;
+  addText(`تاريخ التقييم: ${completedDate}`, yPos, 11, "right", [100, 116, 139]);
 
-  // Overall Score Box
-  pdf.setFillColor(240, 249, 255);
+  yPos += 25;
+
+  // ===================== OVERALL SCORE SECTION =====================
+  pdf.setFillColor(239, 246, 255);
   pdf.setDrawColor(59, 130, 246);
-  pdf.roundedRect(margin, yPos, pageWidth - margin * 2, 40, 3, 3, "FD");
+  pdf.setLineWidth(0.5);
+  pdf.roundedRect(margin, yPos, pageWidth - margin * 2, 50, 4, 4, "FD");
 
-  yPos += 15;
+  const boxCenterY = yPos + 25;
+  const leftBoxX = margin + 45;
+  const rightBoxX = pageWidth - margin - 45;
 
-  // Score (Right)
-  pdf.setTextColor(59, 130, 246);
-  addArabicText("الدرجة الإجمالية", yPos - 3, 14, "right");
+  // Overall Score (Right side)
+  pdf.setFont(arabicFont, "normal");
+  pdf.setFontSize(11);
+  pdf.setTextColor(100, 116, 139);
+  pdf.text(renderText("الدرجة الإجمالية"), rightBoxX, boxCenterY - 12, { align: "center" });
 
   pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(32);
-  pdf.setTextColor(0, 0, 0);
-  pdf.text(`${Math.round(assessment.overall_score || 0)}%`, pageWidth - margin - 5, yPos + 15, {
-    align: "right",
-  });
+  pdf.setFontSize(36);
+  pdf.setTextColor(30, 64, 175);
+  pdf.text(`${Math.round(assessment.overall_score || 0)}%`, rightBoxX, boxCenterY + 8, { align: "center" });
 
-  // Maturity (Left)
+  // Divider line
+  pdf.setDrawColor(203, 213, 225);
+  pdf.setLineWidth(0.3);
+  pdf.line(pageWidth / 2, yPos + 10, pageWidth / 2, yPos + 40);
+
+  // Maturity Level (Left side)
   const maturity = assessment.maturity_level ? maturityLabels[assessment.maturity_level] : null;
-  pdf.setTextColor(59, 130, 246);
-  addArabicText("مستوى النضج", yPos - 3, 14, "left");
 
   pdf.setFont(arabicFont, "normal");
-  pdf.setFontSize(24);
-  pdf.setTextColor(0, 0, 0);
-  const maturityText = hasAmiri ? processArabicText(maturity?.ar || "—") : maturity?.ar || "—";
-  pdf.text(maturityText, margin + 5, yPos + 15);
+  pdf.setFontSize(11);
+  pdf.setTextColor(100, 116, 139);
+  pdf.text(renderText("مستوى النضج"), leftBoxX, boxCenterY - 12, { align: "center" });
 
-  yPos += 45;
+  if (maturity) {
+    pdf.setTextColor(maturity.color[0], maturity.color[1], maturity.color[2]);
+  } else {
+    pdf.setTextColor(0, 0, 0);
+  }
+  pdf.setFontSize(26);
+  pdf.text(renderText(maturity?.ar || "—"), leftBoxX, boxCenterY + 8, { align: "center" });
 
-  // Dimension Scores
-  pdf.setTextColor(59, 130, 246);
-  yPos = addArabicText("نتائج المعايير", yPos, 16, "right");
-  yPos += 5;
+  yPos += 60;
 
-  const tableData = dimensionScores.map((ds) => [
-    ds.percentage >= 75 ? "ممتاز" : ds.percentage >= 50 ? "جيد" : ds.percentage >= 25 ? "يحتاج تحسين" : "ضعيف",
-    `${Math.round(ds.percentage)}%`,
-    `${ds.score} / ${ds.max_possible_score}`,
-    hasAmiri ? processArabicText(ds.dimension.name_ar) : ds.dimension.name_ar,
-    ds.dimension.order_index.toString(),
-  ]);
+  // ===================== DIMENSION SCORES TABLE =====================
+  checkPageBreak(60);
+
+  addText("نتائج المعايير", yPos, 16, "right", [30, 64, 175]);
+  yPos += 8;
+
+  const tableData = dimensionScores.map((ds) => {
+    const status = ds.percentage >= 75 ? "ممتاز" : ds.percentage >= 50 ? "جيد" : ds.percentage >= 25 ? "يحتاج تحسين" : "ضعيف";
+    return [
+      renderText(status),
+      `${Math.round(ds.percentage)}%`,
+      `${ds.score} / ${ds.max_possible_score}`,
+      renderText(ds.dimension.name_ar),
+      ds.dimension.order_index.toString(),
+    ];
+  });
 
   const tableOptions: UserOptions = {
     startY: yPos,
     head: [
       [
-        hasAmiri ? processArabicText("المستوى") : "المستوى",
-        hasAmiri ? processArabicText("النسبة") : "النسبة",
-        hasAmiri ? processArabicText("الدرجة") : "الدرجة",
-        hasAmiri ? processArabicText("المعيار") : "المعيار",
+        renderText("الحالة"),
+        renderText("النسبة"),
+        renderText("الدرجة"),
+        renderText("المعيار"),
         "#",
       ],
     ],
     body: tableData,
-    theme: "striped",
+    theme: "grid",
     styles: {
       font: arabicFont,
-      halign: "right",
+      halign: "center",
+      valign: "middle",
+      cellPadding: 4,
+      fontSize: 10,
+      lineColor: [226, 232, 240],
+      lineWidth: 0.2,
     },
     headStyles: {
-      fillColor: [59, 130, 246],
+      fillColor: [30, 64, 175],
       textColor: [255, 255, 255],
       fontSize: 11,
       font: arabicFont,
-      halign: "right",
+      halign: "center",
+      fontStyle: "normal",
     },
     bodyStyles: {
       fontSize: 10,
       font: arabicFont,
+      textColor: [30, 41, 59],
+    },
+    alternateRowStyles: {
+      fillColor: [248, 250, 252],
     },
     columnStyles: {
-      0: { cellWidth: 30 },
-      1: { cellWidth: 20, halign: "center" },
-      2: { cellWidth: 25, halign: "center" },
-      3: { cellWidth: 70 },
-      4: { cellWidth: 10, halign: "center" },
+      0: { cellWidth: 28, halign: "center" },
+      1: { cellWidth: 22, halign: "center" },
+      2: { cellWidth: 28, halign: "center" },
+      3: { cellWidth: 70, halign: "right" },
+      4: { cellWidth: 12, halign: "center" },
     },
     margin: { left: margin, right: margin },
+    tableLineColor: [226, 232, 240],
+    tableLineWidth: 0.2,
   };
 
-  // Robust integration: prefer plugin method if it exists, otherwise use functional API.
   if (typeof pdf.autoTable === "function") {
     pdf.autoTable(tableOptions);
   } else {
@@ -238,114 +288,89 @@ export async function exportResultsToPDF(
   const finalY = pdf.lastAutoTable?.finalY;
   yPos = (typeof finalY === "number" ? finalY : yPos) + 15;
 
-  const ensurePage = () => {
-    if (yPos > 200) {
-      pdf.addPage();
-      yPos = 20;
-    }
+  // ===================== INSIGHTS SECTIONS =====================
+  const renderSection = (
+    title: string,
+    items: string[],
+    titleColor: number[],
+    iconColor: number[],
+    maxItems: number = 5
+  ) => {
+    if (items.length === 0) return;
+
+    checkPageBreak(40);
+
+    // Section title
+    addText(title, yPos, 14, "right", titleColor);
+    yPos += 8;
+
+    pdf.setFont(arabicFont, "normal");
+    pdf.setFontSize(11);
+    pdf.setTextColor(51, 65, 85);
+
+    items.slice(0, maxItems).forEach((item, index) => {
+      checkPageBreak(15);
+
+      const bulletNum = `${index + 1}.`;
+      const text = renderText(item);
+      const maxWidth = pageWidth - margin * 2 - 15;
+      const lines = pdf.splitTextToSize(text, maxWidth);
+
+      // Bullet/number
+      pdf.setTextColor(iconColor[0], iconColor[1], iconColor[2]);
+      pdf.text(bulletNum, pageWidth - margin, yPos, { align: "right" });
+
+      // Content
+      pdf.setTextColor(51, 65, 85);
+      lines.forEach((line: string, lineIndex: number) => {
+        if (lineIndex === 0) {
+          pdf.text(line, pageWidth - margin - 10, yPos, { align: "right" });
+        } else {
+          yPos += 6;
+          checkPageBreak(10);
+          pdf.text(line, pageWidth - margin - 10, yPos, { align: "right" });
+        }
+      });
+
+      yPos += 8;
+    });
+
+    yPos += 5;
   };
 
-  ensurePage();
-
   // Strengths
-  if (strengths.length > 0) {
-    pdf.setTextColor(34, 197, 94);
-    yPos = addArabicText("نقاط القوة", yPos, 16, "right");
-    yPos += 6;
-
-    pdf.setTextColor(0, 0, 0);
-    pdf.setFont(arabicFont, "normal");
-    pdf.setFontSize(11);
-
-    strengths.forEach((s) => {
-      const text = `• ${s}`;
-      const processed = hasAmiri ? processArabicText(text) : text;
-      const lines = pdf.splitTextToSize(processed, pageWidth - margin * 2 - 10);
-      lines.forEach((line: string) => {
-        if (yPos > 270) {
-          pdf.addPage();
-          yPos = 20;
-        }
-        pdf.text(line, pageWidth - margin - 5, yPos, { align: "right" });
-        yPos += 7;
-      });
-    });
-
-    yPos += 8;
-  }
-
-  ensurePage();
+  renderSection("نقاط القوة", strengths, [22, 163, 74], [22, 163, 74]);
 
   // Opportunities
-  if (opportunities.length > 0) {
-    pdf.setTextColor(249, 115, 22);
-    yPos = addArabicText("فرص التحسين", yPos, 16, "right");
-    yPos += 6;
-
-    pdf.setTextColor(0, 0, 0);
-    pdf.setFont(arabicFont, "normal");
-    pdf.setFontSize(11);
-
-    opportunities.slice(0, 5).forEach((o) => {
-      const text = `• ${o}`;
-      const processed = hasAmiri ? processArabicText(text) : text;
-      const lines = pdf.splitTextToSize(processed, pageWidth - margin * 2 - 10);
-      lines.forEach((line: string) => {
-        if (yPos > 270) {
-          pdf.addPage();
-          yPos = 20;
-        }
-        pdf.text(line, pageWidth - margin - 5, yPos, { align: "right" });
-        yPos += 7;
-      });
-    });
-
-    yPos += 8;
-  }
-
-  ensurePage();
+  renderSection("فرص التحسين", opportunities, [234, 88, 12], [234, 88, 12]);
 
   // Recommendations
-  if (recommendations.length > 0) {
-    pdf.setTextColor(59, 130, 246);
-    yPos = addArabicText("التوصيات", yPos, 16, "right");
-    yPos += 6;
+  renderSection("التوصيات العملية", recommendations, [37, 99, 235], [37, 99, 235]);
 
-    pdf.setTextColor(0, 0, 0);
-    pdf.setFont(arabicFont, "normal");
-    pdf.setFontSize(11);
-
-    recommendations.slice(0, 5).forEach((r, index) => {
-      const text = `${index + 1}. ${r}`;
-      const processed = hasAmiri ? processArabicText(text) : text;
-      const lines = pdf.splitTextToSize(processed, pageWidth - margin * 2 - 10);
-      lines.forEach((line: string) => {
-        if (yPos > 270) {
-          pdf.addPage();
-          yPos = 20;
-        }
-        pdf.text(line, pageWidth - margin - 5, yPos, { align: "right" });
-        yPos += 7;
-      });
-      yPos += 2;
-    });
-  }
-
-  // Footer
+  // ===================== FOOTER =====================
   const pageCount = pdf.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     pdf.setPage(i);
+
+    // Footer line
+    pdf.setDrawColor(226, 232, 240);
+    pdf.setLineWidth(0.3);
+    pdf.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
+
+    // Footer text
     pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(9);
-    pdf.setTextColor(150, 150, 150);
+    pdf.setTextColor(148, 163, 184);
 
-    const footerRaw = `منصة نُشارك - صفحة ${i} من ${pageCount}`;
-    const footerText = hasAmiri ? processArabicText(footerRaw) : footerRaw;
-    pdf.text(footerText, pageWidth / 2, 285, { align: "center" });
+    const footerText = renderText(`منصة نُشارك للتقييم الذاتي`);
+    pdf.text(footerText, pageWidth - margin, pageHeight - 8, { align: "right" });
+
+    const pageText = `${i} / ${pageCount}`;
+    pdf.text(pageText, margin, pageHeight - 8, { align: "left" });
   }
 
-  // Save / Download
-  const fileName = `تقرير-التقييم-${assessment.id.slice(0, 8)}-${new Date().toISOString().slice(0, 10)}.pdf`;
+  // ===================== DOWNLOAD =====================
+  const fileName = `تقرير-نُشارك-${new Date().toISOString().slice(0, 10)}.pdf`;
 
   if (typeof window !== "undefined" && typeof document !== "undefined") {
     const blob = pdf.output("blob") as Blob;
