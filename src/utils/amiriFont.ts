@@ -1,6 +1,9 @@
 // Amiri font loader for jsPDF Arabic support
 // We serve the font locally from /public/fonts to avoid CORS/CSP issues.
 
+import { reshape } from "arabic-persian-reshaper";
+import bidi from "bidi-js";
+
 let cachedAmiriBase64: string | null = null;
 
 export async function loadAmiriFont(): Promise<string> {
@@ -39,15 +42,30 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
   return btoa(binary);
 }
 
-// Process Arabic text for PDF - NO reversal needed when using proper RTL font
-// jsPDF with embedded Arabic fonts like Amiri handles RTL correctly
+/**
+ * Process Arabic text for proper PDF rendering
+ * 1. Reshape Arabic characters (handles ligatures and contextual forms)
+ * 2. Apply BiDi algorithm to handle mixed LTR/RTL text properly
+ */
 export function processArabicText(text: string): string {
-  // Simply return the text as-is - do NOT reverse characters
-  // The Amiri font and jsPDF handle Arabic RTL display correctly
-  return text;
+  if (!text) return text;
+  
+  try {
+    // Step 1: Reshape Arabic text to handle proper character connections
+    const reshaped = reshape(text);
+    
+    // Step 2: Apply BiDi algorithm and get the visual order
+    const embeddingLevels = bidi.getEmbeddingLevels(reshaped);
+    const reorderedText = bidi.getReorderedString(reshaped, embeddingLevels);
+    
+    return reorderedText;
+  } catch (error) {
+    console.warn("Arabic text processing failed, using original:", error);
+    return text;
+  }
 }
 
-// Legacy function kept for compatibility - does nothing now
+// Legacy function kept for compatibility
 export function reverseArabicText(text: string): string {
-  return text;
+  return processArabicText(text);
 }
