@@ -4,9 +4,12 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { exportResultsToPDF } from "@/utils/pdfExport";
 import { toast } from "sonner";
+import { DimensionRadarChart } from "@/components/charts/DimensionRadarChart";
+import { DimensionBarChart } from "@/components/charts/DimensionBarChart";
 import {
   BarChart3,
   TrendingUp,
@@ -18,7 +21,9 @@ import {
   Download,
   Loader2,
   Award,
-  FileDown
+  FileDown,
+  PieChart,
+  BarChart2
 } from "lucide-react";
 
 interface Assessment {
@@ -311,6 +316,39 @@ export default function Results() {
                 </p>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Charts Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-primary" />
+              الرسوم البيانية
+            </CardTitle>
+            <CardDescription>
+              عرض مرئي لنتائج المعايير
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="bar" dir="rtl">
+              <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto mb-6">
+                <TabsTrigger value="bar" className="flex items-center gap-2">
+                  <BarChart2 className="h-4 w-4" />
+                  رسم أعمدة
+                </TabsTrigger>
+                <TabsTrigger value="radar" className="flex items-center gap-2">
+                  <PieChart className="h-4 w-4" />
+                  رسم راداري
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="bar">
+                <DimensionBarChart dimensionScores={dimensionScores} />
+              </TabsContent>
+              <TabsContent value="radar">
+                <DimensionRadarChart dimensionScores={dimensionScores} />
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
 
