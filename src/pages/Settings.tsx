@@ -267,7 +267,7 @@ export default function SettingsPage() {
           <TabsContent value="profile">
             <Card>
               <CardHeader className="text-right">
-                <CardTitle className="flex justify-start gap-2 flex-row-reverse">
+                <CardTitle className="flex justify-end gap-2 flex-row-reverse">
                   الملف الشخصي
                   <User className="h-5 w-5 text-primary" />
                 </CardTitle>
@@ -363,7 +363,7 @@ export default function SettingsPage() {
           <TabsContent value="security">
             <Card>
               <CardHeader className="text-right">
-                <CardTitle className="flex items-center justify-start gap-2 flex-row-reverse">
+                <CardTitle className="flex items-center justify-end gap-2 flex-row-reverse">
                   تغيير كلمة المرور
                   <Lock className="h-5 w-5 text-primary" />
                 </CardTitle>
@@ -473,15 +473,15 @@ export default function SettingsPage() {
                     <div className="bg-muted/50 rounded-lg p-4 text-right">
                       <h4 className="text-sm font-medium mb-2">متطلبات كلمة المرور:</h4>
                       <ul className="text-sm text-muted-foreground space-y-1">
-                        <li className="flex items-center justify-start gap-2 flex-row-reverse">
+                        <li className="flex items-center justify-end gap-2 flex-row-reverse">
                           6 أحرف على الأقل
                           <CheckCircle2 className="h-4 w-4 text-green-500" />
                         </li>
-                        <li className="flex items-center justify-start gap-2 flex-row-reverse">
+                        <li className="flex items-center justify-end gap-2 flex-row-reverse">
                           يُفضل استخدام أحرف كبيرة وصغيرة
                           <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
                         </li>
-                        <li className="flex items-center justify-start gap-2 flex-row-reverse">
+                        <li className="flex items-center justify-end gap-2 flex-row-reverse">
                           يُفضل استخدام أرقام ورموز
                           <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
                         </li>
@@ -490,7 +490,7 @@ export default function SettingsPage() {
 
                     <Separator />
 
-                    <div className="flex justify-end">
+                    <div className="flex justify-start">
                       <Button type="submit" disabled={isSavingPassword}>
                         {isSavingPassword ? (
                           <Loader2 className="ml-2 h-4 w-4 animate-spin" />
