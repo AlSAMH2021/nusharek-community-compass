@@ -372,16 +372,40 @@ export async function exportResultsToPDF(
   pdf.setFillColor(255, 255, 255);
   pdf.rect(0, 0, pageWidth, pageHeight, "F");
 
-  // Nusharek logo/brand name at center-top
-  pdf.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-  pdf.setFont(arabicFont, "normal");
-  pdf.setFontSize(32);
-  pdf.text(renderText("نُشارك"), pageWidth / 2, 60, { align: "center" });
+  // Load and add Nusharek logo image
+  try {
+    const logoResponse = await fetch('/src/assets/nusharek-logo.png');
+    const logoBlob = await logoResponse.blob();
+    const logoBase64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        // Extract base64 data after the data URL prefix
+        const base64Data = result.split(',')[1];
+        resolve(base64Data);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(logoBlob);
+    });
+    
+    // Add logo image centered at top (width: 60mm, height auto-calculated to maintain aspect ratio)
+    const logoWidth = 80;
+    const logoHeight = 28; // Approximate height based on logo aspect ratio
+    const logoX = (pageWidth - logoWidth) / 2;
+    pdf.addImage(logoBase64, 'PNG', logoX, 45, logoWidth, logoHeight);
+  } catch (logoError) {
+    // Fallback to text if logo fails to load
+    console.warn("Could not load logo image, falling back to text:", logoError);
+    pdf.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+    pdf.setFont(arabicFont, "normal");
+    pdf.setFontSize(32);
+    pdf.text(renderText("نُشارك"), pageWidth / 2, 60, { align: "center" });
+  }
   
-  // Small tagline
+  // Small tagline below logo
   pdf.setFontSize(12);
   pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-  pdf.text(renderText("منصة التقييم الذاتي للمشاركة المجتمعية"), pageWidth / 2, 72, { align: "center" });
+  pdf.text(renderText("منصة التقييم الذاتي للمشاركة المجتمعية"), pageWidth / 2, 85, { align: "center" });
 
   // Main title
   pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
