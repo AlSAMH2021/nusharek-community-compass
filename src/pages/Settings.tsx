@@ -256,10 +256,10 @@ export default function SettingsPage() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-3">
-            <Settings className="h-7 w-7 text-primary" />
+        <div className="text-right">
+          <h1 className="text-2xl font-bold flex items-center justify-start gap-3 flex-row-reverse">
             الإعدادات
+            <Settings className="h-7 w-7 text-primary" />
           </h1>
           <p className="text-muted-foreground mt-1">
             إدارة حسابك وإعدادات الأمان
@@ -283,9 +283,9 @@ export default function SettingsPage() {
           <TabsContent value="profile">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5 text-primary" />
+                <CardTitle className="flex items-center justify-start gap-2 flex-row-reverse">
                   الملف الشخصي
+                  <User className="h-5 w-5 text-primary" />
                 </CardTitle>
                 <CardDescription>
                   تحديث معلوماتك الشخصية وبيانات التواصل
@@ -332,9 +332,9 @@ export default function SettingsPage() {
                           </FormControl>
                           <FormMessage />
                           {field.value !== user?.email && (
-                            <p className="text-sm text-amber-600 flex items-center gap-1">
-                              <AlertCircle className="h-4 w-4" />
+                            <p className="text-sm text-amber-600 flex items-center justify-start gap-1 flex-row-reverse">
                               سيتم إرسال رابط تأكيد إلى البريد الجديد
+                              <AlertCircle className="h-4 w-4" />
                             </p>
                           )}
                         </FormItem>
@@ -366,14 +366,14 @@ export default function SettingsPage() {
 
                     <Separator />
 
-                    <div className="flex justify-end">
-                      <Button type="submit" disabled={isSavingProfile}>
-                        {isSavingProfile ? (
-                          <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                        ) : (
-                          <Save className="ml-2 h-4 w-4" />
-                        )}
+                    <div className="flex justify-start">
+                      <Button type="submit" disabled={isSavingProfile} className="flex-row-reverse">
                         حفظ التغييرات
+                        {isSavingProfile ? (
+                          <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Save className="me-2 h-4 w-4" />
+                        )}
                       </Button>
                     </div>
                   </form>
@@ -386,9 +386,9 @@ export default function SettingsPage() {
           <TabsContent value="security">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Lock className="h-5 w-5 text-primary" />
+                <CardTitle className="flex items-center justify-start gap-2 flex-row-reverse">
                   تغيير كلمة المرور
+                  <Lock className="h-5 w-5 text-primary" />
                 </CardTitle>
                 <CardDescription>
                   تأكد من استخدام كلمة مرور قوية ومعقدة لحماية حسابك
@@ -502,34 +502,34 @@ export default function SettingsPage() {
                     />
 
                     {/* Password Requirements */}
-                    <div className="bg-muted/50 rounded-lg p-4">
+                    <div className="bg-muted/50 rounded-lg p-4 text-right">
                       <h4 className="text-sm font-medium mb-2">متطلبات كلمة المرور:</h4>
                       <ul className="text-sm text-muted-foreground space-y-1">
-                        <li className="flex items-center gap-2">
-                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        <li className="flex items-center justify-start gap-2 flex-row-reverse">
                           6 أحرف على الأقل
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
                         </li>
-                        <li className="flex items-center gap-2">
-                          <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                        <li className="flex items-center justify-start gap-2 flex-row-reverse">
                           يُفضل استخدام أحرف كبيرة وصغيرة
-                        </li>
-                        <li className="flex items-center gap-2">
                           <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                        </li>
+                        <li className="flex items-center justify-start gap-2 flex-row-reverse">
                           يُفضل استخدام أرقام ورموز
+                          <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
                         </li>
                       </ul>
                     </div>
 
                     <Separator />
 
-                    <div className="flex justify-end">
-                      <Button type="submit" disabled={isSavingPassword}>
-                        {isSavingPassword ? (
-                          <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                        ) : (
-                          <Lock className="ml-2 h-4 w-4" />
-                        )}
+                    <div className="flex justify-start">
+                      <Button type="submit" disabled={isSavingPassword} className="flex-row-reverse">
                         تغيير كلمة المرور
+                        {isSavingPassword ? (
+                          <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Lock className="me-2 h-4 w-4" />
+                        )}
                       </Button>
                     </div>
                   </form>
