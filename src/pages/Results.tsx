@@ -42,26 +42,22 @@ interface DimensionScore {
   };
 }
 
+// المستويات الثلاثة: أساسي (0-49%) - ناشئ (50-74%) - مثالي (75-100%)
 const maturityLabels: Record<string, { label: string; color: string; description: string }> = {
   beginner: {
-    label: "ناشئ",
-    color: "text-red-600 dark:text-red-400",
-    description: "المنظمة في بداية رحلة المشاركة المجتمعية وتحتاج إلى تطوير شامل",
+    label: "أساسي",
+    color: "text-level-beginner",
+    description: "المستوى الأول في رحلة المشاركة المجتمعية، يتطلب بناء الأسس والقدرات",
   },
   developing: {
-    label: "متوسط",
-    color: "text-orange-600 dark:text-orange-400",
-    description: "المنظمة تطبق بعض ممارسات المشاركة المجتمعية وتحتاج لتعزيزها",
-  },
-  advanced: {
-    label: "متقدم",
-    color: "text-blue-600 dark:text-blue-400",
-    description: "المنظمة لديها ممارسات جيدة في المشاركة المجتمعية مع فرص للتحسين",
+    label: "ناشئ",
+    color: "text-level-developing",
+    description: "مرحلة النمو والتطور في ممارسات المشاركة المجتمعية",
   },
   leading: {
-    label: "رائد",
-    color: "text-green-600 dark:text-green-400",
-    description: "المنظمة تتبنى أفضل الممارسات في المشاركة المجتمعية بشكل متكامل",
+    label: "مثالي",
+    color: "text-level-leading",
+    description: "نموذج متميز ورائد في تطبيق أفضل ممارسات المشاركة المجتمعية",
   },
 };
 
@@ -89,18 +85,21 @@ function generateRecommendations(dimensionScores: DimensionScore[]) {
   });
 
   // Add general recommendations based on overall performance
+  // المستويات الثلاثة: أساسي (0-49%) - ناشئ (50-74%) - مثالي (75-100%)
   const avgScore = dimensionScores.reduce((acc, ds) => acc + ds.percentage, 0) / dimensionScores.length;
   
-  if (avgScore < 40) {
+  if (avgScore < 50) {
+    // أساسي
     recommendations.push("تشكيل فريق متخصص للمشاركة المجتمعية مع صلاحيات واضحة");
     recommendations.push("إعداد استراتيجية شاملة للمشاركة المجتمعية على مستوى المنظمة");
-  } else if (avgScore < 60) {
+    recommendations.push("بناء القدرات الأساسية وتدريب الفريق على ممارسات المشاركة");
+  } else if (avgScore < 75) {
+    // ناشئ
     recommendations.push("تعزيز آليات المتابعة والتقييم للممارسات الحالية");
     recommendations.push("بناء شراكات استراتيجية مع أصحاب المصلحة الرئيسيين");
-  } else if (avgScore < 80) {
     recommendations.push("توثيق أفضل الممارسات ومشاركتها داخل المنظمة");
-    recommendations.push("تطوير مؤشرات أداء متقدمة لقياس أثر المشاركة المجتمعية");
   } else {
+    // مثالي
     recommendations.push("مشاركة التجارب الناجحة مع المنظمات الأخرى كنموذج يُحتذى به");
     recommendations.push("الاستثمار في الابتكار والتقنيات الحديثة لتعزيز المشاركة المجتمعية");
   }
