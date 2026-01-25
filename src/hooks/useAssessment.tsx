@@ -266,17 +266,16 @@ export function useAssessment(organizationId: string | null) {
     }
 
     // Calculate overall score and maturity level
+    // المستويات الثلاثة: أساسي (0-49%) - ناشئ (50-74%) - مثالي (75-100%)
     const overallScore = totalMaxScore > 0 ? (totalScore / totalMaxScore) * 100 : 0;
     
     let maturityLevel: "beginner" | "developing" | "advanced" | "leading";
-    if (overallScore < 40) {
-      maturityLevel = "beginner";
-    } else if (overallScore < 60) {
-      maturityLevel = "developing";
-    } else if (overallScore < 80) {
-      maturityLevel = "advanced";
+    if (overallScore < 50) {
+      maturityLevel = "beginner"; // أساسي
+    } else if (overallScore < 75) {
+      maturityLevel = "developing"; // ناشئ
     } else {
-      maturityLevel = "leading";
+      maturityLevel = "leading"; // مثالي
     }
 
     // Update assessment status
