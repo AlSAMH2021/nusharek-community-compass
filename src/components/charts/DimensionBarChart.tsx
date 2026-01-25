@@ -61,6 +61,7 @@ export function DimensionBarChart({ dimensionScores }: DimensionBarChartProps) {
       <BarChart
         data={data}
         margin={{ top: 30, right: 20, left: 20, bottom: 80 }}
+        barCategoryGap="20%"
       >
         <CartesianGrid 
           strokeDasharray="3 3" 
@@ -76,6 +77,7 @@ export function DimensionBarChart({ dimensionScores }: DimensionBarChartProps) {
           angle={-45}
           textAnchor="end"
           height={60}
+          padding={{ left: 20, right: 20 }}
         />
         <YAxis
           domain={[0, 100]}
