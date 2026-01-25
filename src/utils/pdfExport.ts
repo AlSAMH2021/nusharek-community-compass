@@ -367,10 +367,92 @@ export async function exportResultsToPDF(
   // Sort dimension scores by percentage for recommendations (lowest first)
   const sortedByPriority = [...dimensionScores].sort((a, b) => a.percentage - b.percentage);
 
-  // ===================== PAGE 1: COVER PAGE (Minimal Design) =====================
+  // ===================== PAGE 1: COVER PAGE (Minimal Design with Portal Pattern) =====================
   // Clean white background
   pdf.setFillColor(255, 255, 255);
   pdf.rect(0, 0, pageWidth, pageHeight, "F");
+
+  // Draw Nusharek portal pattern in corners (similar to Auth page)
+  const drawPortalShape = (x: number, y: number, size: number, rotation: number, color: number[]) => {
+    pdf.setDrawColor(color[0], color[1], color[2]);
+    pdf.setLineWidth(1.5);
+    
+    // Save the current state
+    const cos = Math.cos(rotation * Math.PI / 180);
+    const sin = Math.sin(rotation * Math.PI / 180);
+    
+    // Helper to rotate a point around center
+    const rotatePoint = (px: number, py: number) => {
+      const dx = px - x;
+      const dy = py - y;
+      return {
+        x: x + dx * cos - dy * sin,
+        y: y + dx * sin + dy * cos
+      };
+    };
+    
+    // Draw the four curved diamond shapes (portal pattern)
+    // Shape 1 - Top right quadrant
+    const s = size / 4;
+    
+    // Outer shape paths (simplified curved diamonds)
+    // First diamond (top-left of pattern)
+    const d1Points = [
+      { x: x - s, y: y - s * 2 },
+      { x: x + s, y: y - s },
+      { x: x, y: y + s },
+      { x: x - s * 2, y: y }
+    ];
+    
+    // Second diamond (top-right)
+    const d2Points = [
+      { x: x + s, y: y - s * 2 },
+      { x: x + s * 2, y: y },
+      { x: x + s, y: y + s },
+      { x: x, y: y - s }
+    ];
+    
+    // Third diamond (bottom-left)
+    const d3Points = [
+      { x: x - s * 2, y: y },
+      { x: x - s, y: y + s },
+      { x: x, y: y + s * 2 },
+      { x: x - s, y: y + s }
+    ];
+    
+    // Fourth diamond (bottom-right)
+    const d4Points = [
+      { x: x, y: y + s },
+      { x: x + s, y: y + s * 2 },
+      { x: x + s * 2, y: y + s },
+      { x: x + s, y: y }
+    ];
+    
+    // Draw all four diamond shapes with rotation
+    [d1Points, d2Points, d3Points, d4Points].forEach((points, index) => {
+      // Use different shades for visual effect
+      if (index < 2) {
+        pdf.setDrawColor(155, 114, 242); // Lighter purple #9b72f2
+      } else {
+        pdf.setDrawColor(105, 41, 242); // Darker purple #6929f2
+      }
+      
+      const rotatedPoints = points.map(p => rotatePoint(p.x, p.y));
+      
+      // Draw diamond shape
+      for (let i = 0; i < rotatedPoints.length; i++) {
+        const start = rotatedPoints[i];
+        const end = rotatedPoints[(i + 1) % rotatedPoints.length];
+        pdf.line(start.x, start.y, end.x, end.y);
+      }
+    });
+  };
+
+  // Draw portal pattern in top-left corner (rotated -15 degrees)
+  drawPortalShape(-15, -15, 80, -15, colors.primaryLight);
+  
+  // Draw portal pattern in bottom-right corner (rotated 165 degrees)
+  drawPortalShape(pageWidth + 15, pageHeight + 15, 80, 165, colors.primaryLight);
 
   // Load and add Nusharek logo image
   try {
