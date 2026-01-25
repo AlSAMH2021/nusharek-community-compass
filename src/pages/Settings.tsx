@@ -267,27 +267,27 @@ export default function SettingsPage() {
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="profile" className="gap-2">
-              <User className="h-4 w-4" />
+        <Tabs defaultValue="profile" className="space-y-6" dir="rtl">
+          <TabsList className="grid w-full max-w-md grid-cols-2 mr-auto ml-0">
+            <TabsTrigger value="profile" className="gap-2 flex-row-reverse">
               الملف الشخصي
+              <User className="h-4 w-4" />
             </TabsTrigger>
-            <TabsTrigger value="security" className="gap-2">
-              <Lock className="h-4 w-4" />
+            <TabsTrigger value="security" className="gap-2 flex-row-reverse">
               الأمان
+              <Lock className="h-4 w-4" />
             </TabsTrigger>
           </TabsList>
 
           {/* Profile Tab */}
           <TabsContent value="profile">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-start gap-2 flex-row-reverse">
-                  الملف الشخصي
+              <CardHeader className="text-right">
+                <CardTitle className="flex items-center justify-end gap-2">
                   <User className="h-5 w-5 text-primary" />
+                  الملف الشخصي
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-right">
                   تحديث معلوماتك الشخصية وبيانات التواصل
                 </CardDescription>
               </CardHeader>
@@ -299,12 +299,12 @@ export default function SettingsPage() {
                       control={profileForm.control}
                       name="fullName"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="text-right">
                           <FormLabel>الاسم الكامل</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <User className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                              <Input placeholder="أدخل اسمك الكامل" className="pr-10" {...field} />
+                              <Input placeholder="أدخل اسمك الكامل" className="pr-10 text-right" {...field} />
                             </div>
                           </FormControl>
                           <FormMessage />
@@ -317,7 +317,7 @@ export default function SettingsPage() {
                       control={profileForm.control}
                       name="email"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="text-right">
                           <FormLabel>البريد الإلكتروني</FormLabel>
                           <FormControl>
                             <div className="relative">
@@ -332,9 +332,9 @@ export default function SettingsPage() {
                           </FormControl>
                           <FormMessage />
                           {field.value !== user?.email && (
-                            <p className="text-sm text-amber-600 flex items-center justify-start gap-1 flex-row-reverse">
-                              سيتم إرسال رابط تأكيد إلى البريد الجديد
+                            <p className="text-sm text-amber-600 flex items-center justify-end gap-1">
                               <AlertCircle className="h-4 w-4" />
+                              سيتم إرسال رابط تأكيد إلى البريد الجديد
                             </p>
                           )}
                         </FormItem>
@@ -346,7 +346,7 @@ export default function SettingsPage() {
                       control={profileForm.control}
                       name="phone"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="text-right">
                           <FormLabel>رقم الهاتف (اختياري)</FormLabel>
                           <FormControl>
                             <div className="relative">
@@ -366,14 +366,14 @@ export default function SettingsPage() {
 
                     <Separator />
 
-                    <div className="flex justify-start">
-                      <Button type="submit" disabled={isSavingProfile} className="flex-row-reverse">
-                        حفظ التغييرات
+                    <div className="flex justify-end">
+                      <Button type="submit" disabled={isSavingProfile}>
                         {isSavingProfile ? (
-                          <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                          <Loader2 className="ml-2 h-4 w-4 animate-spin" />
                         ) : (
-                          <Save className="me-2 h-4 w-4" />
+                          <Save className="ml-2 h-4 w-4" />
                         )}
+                        حفظ التغييرات
                       </Button>
                     </div>
                   </form>
@@ -385,12 +385,12 @@ export default function SettingsPage() {
           {/* Security Tab */}
           <TabsContent value="security">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-start gap-2 flex-row-reverse">
-                  تغيير كلمة المرور
+              <CardHeader className="text-right">
+                <CardTitle className="flex items-center justify-end gap-2">
                   <Lock className="h-5 w-5 text-primary" />
+                  تغيير كلمة المرور
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-right">
                   تأكد من استخدام كلمة مرور قوية ومعقدة لحماية حسابك
                 </CardDescription>
               </CardHeader>
@@ -402,7 +402,7 @@ export default function SettingsPage() {
                       control={passwordForm.control}
                       name="currentPassword"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="text-right">
                           <FormLabel>كلمة المرور الحالية</FormLabel>
                           <FormControl>
                             <div className="relative">
@@ -410,7 +410,8 @@ export default function SettingsPage() {
                               <Input
                                 type={showCurrentPassword ? "text" : "password"}
                                 placeholder="أدخل كلمة المرور الحالية"
-                                className="pr-10 pl-10"
+                                className="pr-10 pl-10 text-right"
+                                dir="rtl"
                                 {...field}
                               />
                               <button
@@ -438,7 +439,7 @@ export default function SettingsPage() {
                       control={passwordForm.control}
                       name="newPassword"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="text-right">
                           <FormLabel>كلمة المرور الجديدة</FormLabel>
                           <FormControl>
                             <div className="relative">
@@ -446,7 +447,8 @@ export default function SettingsPage() {
                               <Input
                                 type={showNewPassword ? "text" : "password"}
                                 placeholder="أدخل كلمة المرور الجديدة"
-                                className="pr-10 pl-10"
+                                className="pr-10 pl-10 text-right"
+                                dir="rtl"
                                 {...field}
                               />
                               <button
@@ -472,7 +474,7 @@ export default function SettingsPage() {
                       control={passwordForm.control}
                       name="confirmPassword"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="text-right">
                           <FormLabel>تأكيد كلمة المرور الجديدة</FormLabel>
                           <FormControl>
                             <div className="relative">
@@ -480,7 +482,8 @@ export default function SettingsPage() {
                               <Input
                                 type={showConfirmPassword ? "text" : "password"}
                                 placeholder="أعد كتابة كلمة المرور الجديدة"
-                                className="pr-10 pl-10"
+                                className="pr-10 pl-10 text-right"
+                                dir="rtl"
                                 {...field}
                               />
                               <button
@@ -505,31 +508,31 @@ export default function SettingsPage() {
                     <div className="bg-muted/50 rounded-lg p-4 text-right">
                       <h4 className="text-sm font-medium mb-2">متطلبات كلمة المرور:</h4>
                       <ul className="text-sm text-muted-foreground space-y-1">
-                        <li className="flex items-center justify-start gap-2 flex-row-reverse">
-                          6 أحرف على الأقل
+                        <li className="flex items-center justify-end gap-2">
                           <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          6 أحرف على الأقل
                         </li>
-                        <li className="flex items-center justify-start gap-2 flex-row-reverse">
+                        <li className="flex items-center justify-end gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
                           يُفضل استخدام أحرف كبيرة وصغيرة
-                          <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
                         </li>
-                        <li className="flex items-center justify-start gap-2 flex-row-reverse">
-                          يُفضل استخدام أرقام ورموز
+                        <li className="flex items-center justify-end gap-2">
                           <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                          يُفضل استخدام أرقام ورموز
                         </li>
                       </ul>
                     </div>
 
                     <Separator />
 
-                    <div className="flex justify-start">
-                      <Button type="submit" disabled={isSavingPassword} className="flex-row-reverse">
-                        تغيير كلمة المرور
+                    <div className="flex justify-end">
+                      <Button type="submit" disabled={isSavingPassword}>
                         {isSavingPassword ? (
-                          <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                          <Loader2 className="ml-2 h-4 w-4 animate-spin" />
                         ) : (
-                          <Lock className="me-2 h-4 w-4" />
+                          <Lock className="ml-2 h-4 w-4" />
                         )}
+                        تغيير كلمة المرور
                       </Button>
                     </div>
                   </form>
