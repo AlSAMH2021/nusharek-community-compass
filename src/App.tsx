@@ -12,6 +12,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import OrganizationSetup from "./pages/OrganizationSetup";
 import Organization from "./pages/Organization";
+import Settings from "./pages/Settings";
 import Assessment from "./pages/Assessment";
 import Results from "./pages/Results";
 import Reports from "./pages/Reports";
@@ -64,7 +65,7 @@ const App = () => (
             } />
             <Route path="/settings" element={
               <ProtectedRoute>
-                <Dashboard />
+                <Settings />
               </ProtectedRoute>
             } />
             <Route path="/admin" element={
