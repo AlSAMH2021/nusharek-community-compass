@@ -98,12 +98,11 @@ const features = [
   },
 ];
 
-// مستويات النضج الأربعة حسب التقييم
+// مستويات النضج الثلاثة حسب التقييم
 const maturityLevels = [
-  { level: "مبتدئ", range: "0-39%", color: "bg-level-beginner", description: "بداية الرحلة نحو المشاركة المجتمعية الفعّالة" },
-  { level: "نامٍ", range: "40-59%", color: "bg-level-developing", description: "تطوير القدرات والأنظمة الأساسية للمشاركة" },
-  { level: "متقدم", range: "60-79%", color: "bg-level-advanced", description: "ممارسات راسخة ومستدامة في إشراك المجتمع" },
-  { level: "رائد", range: "80-100%", color: "bg-level-leading", description: "نموذج يُحتذى به في المشاركة المجتمعية المؤسسية" },
+  { level: "أساسي", range: "0-49%", color: "bg-level-beginner", description: "المستوى الأول في رحلة المشاركة المجتمعية، يتطلب بناء الأسس والقدرات" },
+  { level: "ناشئ", range: "50-74%", color: "bg-level-developing", description: "مرحلة النمو والتطور في ممارسات المشاركة المجتمعية" },
+  { level: "مثالي", range: "75-100%", color: "bg-level-leading", description: "نموذج متميز ورائد في تطبيق أفضل ممارسات المشاركة المجتمعية" },
 ];
 
 export default function Landing() {
