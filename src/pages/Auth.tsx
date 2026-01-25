@@ -122,7 +122,7 @@ export default function Auth() {
                               <Mail className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                               <Input 
                                 placeholder="example@domain.com" 
-                                className="pr-10 direction-ltr text-left" 
+                                className="pr-10 text-right placeholder:text-right" 
                                 {...field} 
                               />
                             </div>
@@ -144,7 +144,7 @@ export default function Auth() {
                               <Input 
                                 type="password" 
                                 placeholder="••••••••" 
-                                className="pr-10" 
+                                className="pr-10 text-right placeholder:text-right" 
                                 {...field} 
                               />
                             </div>
@@ -240,7 +240,7 @@ export default function Auth() {
                               <User className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                               <Input 
                                 placeholder="محمد أحمد" 
-                                className="pr-10" 
+                                className="pr-10 text-right placeholder:text-right" 
                                 {...field} 
                               />
                             </div>
@@ -261,7 +261,7 @@ export default function Auth() {
                               <Mail className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                               <Input 
                                 placeholder="example@domain.com" 
-                                className="pr-10 direction-ltr text-left" 
+                                className="pr-10 text-right placeholder:text-right" 
                                 {...field} 
                               />
                             </div>
@@ -283,7 +283,7 @@ export default function Auth() {
                               <Input 
                                 type="password" 
                                 placeholder="••••••••" 
-                                className="pr-10" 
+                                className="pr-10 text-right placeholder:text-right" 
                                 {...field} 
                               />
                             </div>
@@ -305,7 +305,7 @@ export default function Auth() {
                               <Input 
                                 type="password" 
                                 placeholder="••••••••" 
-                                className="pr-10" 
+                                className="pr-10 text-right placeholder:text-right" 
                                 {...field} 
                               />
                             </div>
