@@ -243,7 +243,7 @@ export default function SettingsPage() {
       <div className="space-y-6">
         {/* Header */}
         <div className="text-right">
-          <h1 className="text-2xl font-bold flex items-center justify-start gap-3 flex-row-reverse">
+          <h1 className="text-2xl font-bold flex justify-start gap-3 flex-row-reverse">
             الإعدادات
             <Settings className="h-7 w-7 text-primary" />
           </h1>
