@@ -71,8 +71,8 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center nusharek-pattern p-4">
-      <div className="w-full max-w-md animate-fade-in">
+    <div className="min-h-screen flex items-center justify-center nusharek-logo-pattern p-4">
+      <div className="w-full max-w-md animate-fade-in relative z-10">
         {/* Logo */}
         <div className="flex justify-center mb-8">
           <NusharekLogo size="lg" />

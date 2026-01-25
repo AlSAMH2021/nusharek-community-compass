@@ -155,6 +155,32 @@
   .nusharek-pattern {
     background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0C13.4 0 0 13.4 0 30s13.4 30 30 30 30-13.4 30-30S46.6 0 30 0zm0 55C16.2 55 5 43.8 5 30S16.2 5 30 5s25 11.2 25 25-11.2 25-25 25z' fill='%236C3AED' fill-opacity='0.03'/%3E%3C/svg%3E");
   }
+
+  /* Logo-based pattern for auth pages - N portal shape */
+  .nusharek-logo-pattern {
+    background-color: hsl(var(--background));
+    position: relative;
+    overflow: hidden;
+  }
+
+  .nusharek-logo-pattern::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath d='M15 50 C15 25, 35 15, 50 15 L50 25 C40 25, 25 35, 25 50 C25 65, 40 75, 50 75 L50 85 C35 85, 15 75, 15 50 Z M55 15 L55 85 L65 85 L65 15 Z M75 25 C90 25, 95 35, 95 50 C95 65, 90 75, 75 75 L75 85 C95 85, 105 70, 105 50 C105 30, 95 15, 75 15 Z' fill='%236C3AED' fill-opacity='0.05'/%3E%3C/svg%3E");
+    background-size: 150px 150px;
+    background-position: center;
+  }
+
+  .nusharek-logo-pattern::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse at 20% 80%, hsl(var(--nusharek-purple) / 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, hsl(var(--nusharek-teal) / 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, hsl(var(--nusharek-navy) / 0.03) 0%, transparent 60%);
+  }
   
   /* Gradient utilities */
   .gradient-primary {
