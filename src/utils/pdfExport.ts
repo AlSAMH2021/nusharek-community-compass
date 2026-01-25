@@ -731,17 +731,6 @@ export async function exportResultsToPDF(
   pdf.addPage();
   yPos = safeMargin;
 
-  // Page header
-  pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-  pdf.rect(0, 0, pageWidth, 20, "F");
-
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFont(arabicFont, "normal");
-  pdf.setFontSize(12);
-  pdf.text(renderText("لوحة المؤشرات التنفيذية"), pageWidth / 2, 13, { align: "center" });
-
-  yPos = 35;
-
   // Section title
   pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   pdf.rect(pageWidth - margin - 3, yPos - 2, 3, 16, "F");
@@ -892,17 +881,6 @@ export async function exportResultsToPDF(
   pdf.addPage();
   yPos = safeMargin;
 
-  // Page header
-  pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-  pdf.rect(0, 0, pageWidth, 20, "F");
-
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFont(arabicFont, "normal");
-  pdf.setFontSize(12);
-  pdf.text(renderText("البيانات التفصيلية"), pageWidth / 2, 13, { align: "center" });
-
-  yPos = 35;
-
   // Section title
   pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   pdf.rect(pageWidth - margin - 3, yPos - 2, 3, 16, "F");
@@ -1043,17 +1021,6 @@ export async function exportResultsToPDF(
   // ===================== PAGE 4: RECOMMENDATIONS & ROADMAP =====================
   pdf.addPage();
   yPos = safeMargin;
-
-  // Page header
-  pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-  pdf.rect(0, 0, pageWidth, 20, "F");
-
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFont(arabicFont, "normal");
-  pdf.setFontSize(12);
-  pdf.text(renderText("التوصيات وخارطة الطريق"), pageWidth / 2, 13, { align: "center" });
-
-  yPos = 35;
 
   // Render insights section as cards
   const renderInsightCard = (
