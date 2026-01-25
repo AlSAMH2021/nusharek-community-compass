@@ -283,9 +283,9 @@ export default function SettingsPage() {
           <TabsContent value="profile">
             <Card>
               <CardHeader className="text-right">
-                <CardTitle className="flex items-center justify-end gap-2">
-                  <User className="h-5 w-5 text-primary" />
+                <CardTitle className="flex items-center justify-start gap-2 flex-row-reverse">
                   الملف الشخصي
+                  <User className="h-5 w-5 text-primary" />
                 </CardTitle>
                 <CardDescription className="text-right">
                   تحديث معلوماتك الشخصية وبيانات التواصل
@@ -324,8 +324,8 @@ export default function SettingsPage() {
                               <Mail className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                               <Input
                                 placeholder="example@email.com"
-                                className="pr-10 text-left"
-                                dir="ltr"
+                                className="pr-10 text-right"
+                                dir="rtl"
                                 {...field}
                               />
                             </div>
@@ -353,8 +353,8 @@ export default function SettingsPage() {
                               <Phone className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                               <Input
                                 placeholder="+966 5x xxx xxxx"
-                                className="pr-10 text-left"
-                                dir="ltr"
+                                className="pr-10 text-right"
+                                dir="rtl"
                                 {...field}
                               />
                             </div>
@@ -366,14 +366,14 @@ export default function SettingsPage() {
 
                     <Separator />
 
-                    <div className="flex justify-end">
-                      <Button type="submit" disabled={isSavingProfile}>
-                        {isSavingProfile ? (
-                          <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                        ) : (
-                          <Save className="ml-2 h-4 w-4" />
-                        )}
+                    <div className="flex justify-start">
+                      <Button type="submit" disabled={isSavingProfile} className="flex-row-reverse">
                         حفظ التغييرات
+                        {isSavingProfile ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Save className="mr-2 h-4 w-4" />
+                        )}
                       </Button>
                     </div>
                   </form>
@@ -386,9 +386,9 @@ export default function SettingsPage() {
           <TabsContent value="security">
             <Card>
               <CardHeader className="text-right">
-                <CardTitle className="flex items-center justify-end gap-2">
-                  <Lock className="h-5 w-5 text-primary" />
+                <CardTitle className="flex items-center justify-start gap-2 flex-row-reverse">
                   تغيير كلمة المرور
+                  <Lock className="h-5 w-5 text-primary" />
                 </CardTitle>
                 <CardDescription className="text-right">
                   تأكد من استخدام كلمة مرور قوية ومعقدة لحماية حسابك
@@ -508,17 +508,17 @@ export default function SettingsPage() {
                     <div className="bg-muted/50 rounded-lg p-4 text-right">
                       <h4 className="text-sm font-medium mb-2">متطلبات كلمة المرور:</h4>
                       <ul className="text-sm text-muted-foreground space-y-1">
-                        <li className="flex items-center justify-end gap-2">
-                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        <li className="flex items-center justify-start gap-2 flex-row-reverse">
                           6 أحرف على الأقل
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
                         </li>
-                        <li className="flex items-center justify-end gap-2">
-                          <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                        <li className="flex items-center justify-start gap-2 flex-row-reverse">
                           يُفضل استخدام أحرف كبيرة وصغيرة
-                        </li>
-                        <li className="flex items-center justify-end gap-2">
                           <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                        </li>
+                        <li className="flex items-center justify-start gap-2 flex-row-reverse">
                           يُفضل استخدام أرقام ورموز
+                          <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
                         </li>
                       </ul>
                     </div>
