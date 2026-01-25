@@ -964,7 +964,7 @@ export async function exportResultsToPDF(
       font: arabicFont,
       halign: "center",
       fontStyle: "normal",
-      cellPadding: 9,
+      cellPadding: 5,
     },
     bodyStyles: {
       fontSize: 10,
