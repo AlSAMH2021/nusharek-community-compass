@@ -240,40 +240,38 @@ export default function SettingsPage() {
 
   return (
     <DashboardLayout>
-      {/* الحاوية الرئيسية مع ضمان التوجيه لليمين */}
-      <div className="space-y-6 text-right" dir="rtl">
+      <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold flex items-center justify-start gap-3">
-            <Settings className="h-7 w-7 text-primary" />
+        <div className="text-right">
+          <h1 className="text-2xl font-bold flex justify-start gap-3 flex-row-reverse">
             الإعدادات
+            <Settings className="h-7 w-7 text-primary" />
           </h1>
           <p className="text-muted-foreground mt-1">إدارة حسابك وإعدادات الأمان</p>
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="profile" className="space-y-6">
-          {/* تم تعديل التموضع هنا ليكون في اليمين تماماً باستخدام ms-0 */}
-          <TabsList className="grid w-full max-w-md grid-cols-2 ms-0 me-auto">
-            <TabsTrigger value="profile" className="gap-2">
-              <User className="h-4 w-4" />
+        <Tabs defaultValue="profile" className="space-y-6" dir="rtl">
+          <TabsList className="grid w-full max-w-md grid-cols-2 mr-auto ml-0">
+            <TabsTrigger value="profile" className="gap-2 flex-row-reverse">
               الملف الشخصي
+              <User className="h-4 w-4" />
             </TabsTrigger>
-            <TabsTrigger value="security" className="gap-2">
-              <Lock className="h-4 w-4" />
+            <TabsTrigger value="security" className="gap-2 flex-row-reverse">
               الأمان
+              <Lock className="h-4 w-4" />
             </TabsTrigger>
           </TabsList>
 
           {/* Profile Tab */}
           <TabsContent value="profile">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5 text-primary" />
+              <CardHeader className="text-right">
+                <CardTitle className="flex justify-end gap-2 flex-row-reverse">
                   الملف الشخصي
+                  <User className="h-5 w-5 text-primary" />
                 </CardTitle>
-                <CardDescription>تحديث معلوماتك الشخصية وبيانات التواصل</CardDescription>
+                <CardDescription className="text-right">تحديث معلوماتك الشخصية وبيانات التواصل</CardDescription>
               </CardHeader>
               <CardContent>
                 <Form {...profileForm}>
@@ -283,11 +281,10 @@ export default function SettingsPage() {
                       control={profileForm.control}
                       name="fullName"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="block text-right">الاسم الكامل</FormLabel>
+                        <FormItem className="text-right">
+                          <FormLabel>الاسم الكامل</FormLabel>
                           <FormControl>
                             <div className="relative">
-                              {/* الأيقونة على اليمين والنص مزاح لليسار قليلاً pr-10 */}
                               <User className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                               <Input placeholder="أدخل اسمك الكامل" className="pr-10 text-right" {...field} />
                             </div>
@@ -302,20 +299,26 @@ export default function SettingsPage() {
                       control={profileForm.control}
                       name="email"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="block text-right">البريد الإلكتروني</FormLabel>
+                        <FormItem className="text-right">
+                          <FormLabel>البريد الإلكتروني</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Mail className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                               <Input
                                 placeholder="example@email.com"
                                 className="pr-10 text-right"
-                                dir="ltr" // البريد الإلكتروني يفضل أن يظل ltr
+                                dir="rtl"
                                 {...field}
                               />
                             </div>
                           </FormControl>
                           <FormMessage />
+                          {field.value !== user?.email && (
+                            <p className="text-sm text-amber-600 flex items-center justify-end gap-1">
+                              <AlertCircle className="h-4 w-4" />
+                              سيتم إرسال رابط تأكيد إلى البريد الجديد
+                            </p>
+                          )}
                         </FormItem>
                       )}
                     />
@@ -325,12 +328,12 @@ export default function SettingsPage() {
                       control={profileForm.control}
                       name="phone"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="block text-right">رقم الهاتف (اختياري)</FormLabel>
+                        <FormItem className="text-right">
+                          <FormLabel>رقم الهاتف (اختياري)</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Phone className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                              <Input placeholder="+966 5x xxx xxxx" className="pr-10 text-right" dir="ltr" {...field} />
+                              <Input placeholder="+966 5x xxx xxxx" className="pr-10 text-right" dir="rtl" {...field} />
                             </div>
                           </FormControl>
                           <FormMessage />
@@ -341,9 +344,13 @@ export default function SettingsPage() {
                     <Separator />
 
                     <div className="flex justify-start">
-                      <Button type="submit" disabled={isSavingProfile} className="gap-2">
-                        {isSavingProfile ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      <Button type="submit" disabled={isSavingProfile} className="flex-row-reverse">
                         حفظ التغييرات
+                        {isSavingProfile ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Save className="mr-2 h-4 w-4" />
+                        )}
                       </Button>
                     </div>
                   </form>
@@ -352,9 +359,151 @@ export default function SettingsPage() {
             </Card>
           </TabsContent>
 
-          {/* Security Tab Content - (يمكن تطبيق نفس منطق المحاذاة أعلاه عليه) */}
+          {/* Security Tab */}
           <TabsContent value="security">
-            {/* ... نفس تعديلات الـ Card أعلاه لضمان تناسق الأيقونات والـ Input */}
+            <Card>
+              <CardHeader className="text-right">
+                <CardTitle className="flex items-center justify-end gap-2 flex-row-reverse">
+                  تغيير كلمة المرور
+                  <Lock className="h-5 w-5 text-primary" />
+                </CardTitle>
+                <CardDescription className="text-right">
+                  تأكد من استخدام كلمة مرور قوية ومعقدة لحماية حسابك
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Form {...passwordForm}>
+                  <form onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)} className="space-y-6">
+                    {/* Current Password */}
+                    <FormField
+                      control={passwordForm.control}
+                      name="currentPassword"
+                      render={({ field }) => (
+                        <FormItem className="text-right">
+                          <FormLabel>كلمة المرور الحالية</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                type={showCurrentPassword ? "text" : "password"}
+                                placeholder="أدخل كلمة المرور الحالية"
+                                className="pr-10 pl-10 text-right"
+                                dir="rtl"
+                                {...field}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                              >
+                                {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              </button>
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <Separator />
+
+                    {/* New Password */}
+                    <FormField
+                      control={passwordForm.control}
+                      name="newPassword"
+                      render={({ field }) => (
+                        <FormItem className="text-right">
+                          <FormLabel>كلمة المرور الجديدة</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                type={showNewPassword ? "text" : "password"}
+                                placeholder="أدخل كلمة المرور الجديدة"
+                                className="pr-10 pl-10 text-right"
+                                dir="rtl"
+                                {...field}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowNewPassword(!showNewPassword)}
+                                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                              >
+                                {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              </button>
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Confirm Password */}
+                    <FormField
+                      control={passwordForm.control}
+                      name="confirmPassword"
+                      render={({ field }) => (
+                        <FormItem className="text-right">
+                          <FormLabel>تأكيد كلمة المرور الجديدة</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                type={showConfirmPassword ? "text" : "password"}
+                                placeholder="أعد كتابة كلمة المرور الجديدة"
+                                className="pr-10 pl-10 text-right"
+                                dir="rtl"
+                                {...field}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                              >
+                                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              </button>
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Password Requirements */}
+                    <div className="bg-muted/50 rounded-lg p-4 text-right">
+                      <h4 className="text-sm font-medium mb-2">متطلبات كلمة المرور:</h4>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li className="flex items-center justify-end gap-2 flex-row-reverse">
+                          6 أحرف على الأقل
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        </li>
+                        <li className="flex items-center justify-end gap-2 flex-row-reverse">
+                          يُفضل استخدام أحرف كبيرة وصغيرة
+                          <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                        </li>
+                        <li className="flex items-center justify-end gap-2 flex-row-reverse">
+                          يُفضل استخدام أرقام ورموز
+                          <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                        </li>
+                      </ul>
+                    </div>
+
+                    <Separator />
+
+                    <div className="flex justify-start">
+                      <Button type="submit" disabled={isSavingPassword}>
+                        {isSavingPassword ? (
+                          <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Lock className="ml-2 h-4 w-4" />
+                        )}
+                        تغيير كلمة المرور
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
