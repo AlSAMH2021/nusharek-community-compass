@@ -115,8 +115,8 @@ export default function Auth() {
                       control={signInForm.control}
                       name="email"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>البريد الإلكتروني</FormLabel>
+                        <FormItem className="text-right">
+                          <FormLabel className="block text-right">البريد الإلكتروني</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Mail className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -136,8 +136,8 @@ export default function Auth() {
                       control={signInForm.control}
                       name="password"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>كلمة المرور</FormLabel>
+                        <FormItem className="text-right">
+                          <FormLabel className="block text-right">كلمة المرور</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -254,8 +254,8 @@ export default function Auth() {
                       control={signUpForm.control}
                       name="email"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>البريد الإلكتروني</FormLabel>
+                        <FormItem className="text-right">
+                          <FormLabel className="block text-right">البريد الإلكتروني</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Mail className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -275,8 +275,8 @@ export default function Auth() {
                       control={signUpForm.control}
                       name="password"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>كلمة المرور</FormLabel>
+                        <FormItem className="text-right">
+                          <FormLabel className="block text-right">كلمة المرور</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -297,8 +297,8 @@ export default function Auth() {
                       control={signUpForm.control}
                       name="confirmPassword"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>تأكيد كلمة المرور</FormLabel>
+                        <FormItem className="text-right">
+                          <FormLabel className="block text-right">تأكيد كلمة المرور</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
