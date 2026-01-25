@@ -101,9 +101,13 @@ export async function exportResultsToPDF(
   // Brand colors - using tuples for jspdf-autotable compatibility
   type ColorTuple = [number, number, number];
   const colors = {
-    primary: [20, 184, 166] as ColorTuple, // Teal
-    primaryDark: [13, 148, 136] as ColorTuple,
-    secondary: [15, 23, 42] as ColorTuple, // Dark slate
+    primary: [108, 58, 237] as ColorTuple, // Nusharek Purple (#6C3AED)
+    primaryDark: [91, 33, 182] as ColorTuple,
+    primaryLight: [139, 92, 246] as ColorTuple,
+    secondary: [15, 23, 42] as ColorTuple, // Navy
+    teal: [20, 184, 166] as ColorTuple,
+    coral: [248, 113, 113] as ColorTuple,
+    gold: [251, 191, 36] as ColorTuple,
     text: [30, 41, 59] as ColorTuple,
     textMuted: [100, 116, 139] as ColorTuple,
     border: [226, 232, 240] as ColorTuple,
@@ -151,39 +155,136 @@ export async function exportResultsToPDF(
   };
 
   // Draw decorative circle pattern
-  const drawDecoPattern = (x: number, y: number, size: number, color: number[]) => {
+  const drawDecoPattern = (x: number, y: number, size: number, color: number[], opacity: number = 1) => {
     pdf.setDrawColor(color[0], color[1], color[2]);
-    pdf.setLineWidth(0.3);
+    pdf.setLineWidth(0.5 * opacity);
     pdf.circle(x, y, size, "S");
-    pdf.circle(x, y, size * 0.7, "S");
-    pdf.circle(x, y, size * 0.4, "S");
+    pdf.circle(x, y, size * 0.65, "S");
+    pdf.circle(x, y, size * 0.35, "S");
   };
+
+  // Draw curved grid pattern (Nusharek portal pattern)
+  const drawPortalPattern = (centerX: number, centerY: number, size: number) => {
+    pdf.setDrawColor(255, 255, 255);
+    pdf.setLineWidth(0.3);
+    
+    // Draw arcs
+    for (let i = 1; i <= 4; i++) {
+      const radius = size * (i / 4);
+      // Draw partial circles (arcs simulation)
+      pdf.circle(centerX, centerY, radius, "S");
+    }
+    
+    // Draw radial lines
+    for (let angle = 0; angle < 360; angle += 45) {
+      const rad = (angle * Math.PI) / 180;
+      const x2 = centerX + Math.cos(rad) * size;
+      const y2 = centerY + Math.sin(rad) * size;
+      pdf.line(centerX, centerY, x2, y2);
+    }
+  };
+
+  // ===================== COVER PAGE =====================
+  // Full page purple background
+  pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+  pdf.rect(0, 0, pageWidth, pageHeight, "F");
+
+  // Decorative darker bottom section
+  pdf.setFillColor(colors.primaryDark[0], colors.primaryDark[1], colors.primaryDark[2]);
+  pdf.rect(0, pageHeight - 60, pageWidth, 60, "F");
+
+  // Draw portal patterns
+  drawPortalPattern(pageWidth - 40, 50, 35);
+  drawPortalPattern(40, pageHeight - 80, 25);
+  
+  // Decorative circles
+  pdf.setDrawColor(255, 255, 255);
+  pdf.setLineWidth(0.4);
+  drawDecoPattern(pageWidth - 30, pageHeight / 2, 20, colors.white, 0.5);
+  drawDecoPattern(35, 120, 15, colors.white, 0.5);
+
+  // Main title - Large
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFont(arabicFont, "normal");
+  pdf.setFontSize(42);
+  pdf.text(renderText("تقرير التقييم"), pageWidth / 2, pageHeight / 2 - 35, { align: "center" });
+
+  // Subtitle
+  pdf.setFontSize(28);
+  pdf.text(renderText("المشاركة المجتمعية"), pageWidth / 2, pageHeight / 2, { align: "center" });
+
+  // Decorative line
+  pdf.setDrawColor(colors.gold[0], colors.gold[1], colors.gold[2]);
+  pdf.setLineWidth(2);
+  pdf.line(pageWidth / 2 - 50, pageHeight / 2 + 15, pageWidth / 2 + 50, pageHeight / 2 + 15);
+
+  // Organization name box
+  if (organization) {
+    // Semi-transparent white box
+    pdf.setFillColor(255, 255, 255);
+    const orgBoxWidth = 140;
+    const orgBoxHeight = 30;
+    const orgBoxX = (pageWidth - orgBoxWidth) / 2;
+    const orgBoxY = pageHeight / 2 + 30;
+    pdf.roundedRect(orgBoxX, orgBoxY, orgBoxWidth, orgBoxHeight, 4, 4, "F");
+    
+    pdf.setFont(arabicFont, "normal");
+    pdf.setFontSize(16);
+    pdf.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+    pdf.text(renderText(organization.name), pageWidth / 2, orgBoxY + 19, { align: "center" });
+  }
+
+  // Platform name
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFontSize(18);
+  pdf.text(renderText("منصة نُشارك"), pageWidth / 2, pageHeight - 85, { align: "center" });
+
+  // Date at bottom
+  const coverDate = assessment.completed_at
+    ? new Date(assessment.completed_at).toLocaleDateString("ar-SA", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : new Date().toLocaleDateString("ar-SA", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+  
+  pdf.setFontSize(12);
+  pdf.setTextColor(200, 200, 220);
+  pdf.text(renderText(coverDate), pageWidth / 2, pageHeight - 25, { align: "center" });
+
+  // ===================== NEW PAGE - CONTENT STARTS =====================
+  pdf.addPage();
+  yPos = 25;
 
   // ===================== HEADER =====================
   // Gradient-like header with primary color
   pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-  pdf.rect(0, 0, pageWidth, 55, "F");
+  pdf.rect(0, 0, pageWidth, 50, "F");
   
   // Decorative darker strip
   pdf.setFillColor(colors.primaryDark[0], colors.primaryDark[1], colors.primaryDark[2]);
-  pdf.rect(0, 48, pageWidth, 7, "F");
+  pdf.rect(0, 44, pageWidth, 6, "F");
 
   // Decorative patterns
-  drawDecoPattern(pageWidth - 25, 20, 12, [255, 255, 255]);
-  drawDecoPattern(25, 35, 8, [255, 255, 255]);
+  drawDecoPattern(pageWidth - 22, 18, 10, colors.white);
+  drawDecoPattern(22, 30, 7, colors.white);
 
   // Main title
   pdf.setTextColor(255, 255, 255);
   pdf.setFont(arabicFont, "normal");
-  pdf.setFontSize(26);
-  pdf.text(renderText("تقرير تقييم المشاركة المجتمعية"), pageWidth / 2, 25, { align: "center" });
+  pdf.setFontSize(22);
+  pdf.text(renderText("تقرير تقييم المشاركة المجتمعية"), pageWidth / 2, 22, { align: "center" });
 
-  // Subtitle with badge effect
-  pdf.setFontSize(13);
-  pdf.setTextColor(255, 255, 255);
-  pdf.text(renderText("منصة نُشارك للتقييم الذاتي"), pageWidth / 2, 40, { align: "center" });
+  // Subtitle
+  pdf.setFontSize(11);
+  pdf.setTextColor(220, 220, 240);
+  pdf.text(renderText("منصة نُشارك للتقييم الذاتي"), pageWidth / 2, 36, { align: "center" });
 
-  yPos = 68;
+  yPos = 62;
 
   // ===================== ORGANIZATION INFO CARD =====================
   const orgCardHeight = organization?.sector ? 38 : 30;
