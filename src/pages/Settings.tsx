@@ -252,7 +252,7 @@ export default function SettingsPage() {
 
         {/* Tabs */}
         <Tabs defaultValue="profile" className="space-y-6" dir="rtl">
-          <TabsList className="grid w-full max-w-md grid-cols-2 mr-auto ml-0">
+          <TabsList className="grid w-full max-w-md grid-cols-2 ml-auto mr-0">
             <TabsTrigger value="profile" className="gap-2 flex-row-reverse">
               الملف الشخصي
               <User className="h-4 w-4" />
