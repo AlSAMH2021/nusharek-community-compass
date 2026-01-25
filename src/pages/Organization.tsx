@@ -14,19 +14,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Loader2, 
-  Building2, 
-  Globe, 
-  Phone, 
-  Mail, 
-  MapPin, 
-  Save, 
-  Pencil, 
+import {
+  Loader2,
+  Building2,
+  Globe,
+  Phone,
+  Mail,
+  MapPin,
+  Save,
+  Pencil,
   X,
   CheckCircle2,
   Calendar,
-  Briefcase
+  Briefcase,
 } from "lucide-react";
 
 const organizationSchema = z.object({
@@ -36,7 +36,12 @@ const organizationSchema = z.object({
   sector: z.string().max(100, "القطاع طويل جداً").optional(),
   description: z.string().max(500, "الوصف طويل جداً").optional(),
   website: z.string().url("يرجى إدخال رابط صحيح").max(255, "الرابط طويل جداً").optional().or(z.literal("")),
-  contactEmail: z.string().email("يرجى إدخال بريد إلكتروني صحيح").max(255, "البريد طويل جداً").optional().or(z.literal("")),
+  contactEmail: z
+    .string()
+    .email("يرجى إدخال بريد إلكتروني صحيح")
+    .max(255, "البريد طويل جداً")
+    .optional()
+    .or(z.literal("")),
   contactPhone: z.string().max(20, "رقم الهاتف طويل جداً").optional(),
   city: z.string().max(100, "اسم المدينة طويل جداً").optional(),
 });
@@ -196,7 +201,7 @@ export default function OrganizationPage() {
               contact_phone: values.contactPhone || null,
               city: values.city || null,
             }
-          : null
+          : null,
       );
 
       toast({
@@ -271,9 +276,7 @@ export default function OrganizationPage() {
           <Building2 className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-2">لم يتم العثور على منظمة</h2>
           <p className="text-muted-foreground mb-4">يبدو أنك لم تنضم إلى منظمة بعد</p>
-          <Button onClick={() => navigate("/organization/setup")}>
-            إنشاء منظمة جديدة
-          </Button>
+          <Button onClick={() => navigate("/organization/setup")}>إنشاء منظمة جديدة</Button>
         </div>
       </DashboardLayout>
     );
@@ -289,9 +292,7 @@ export default function OrganizationPage() {
               <Building2 className="h-7 w-7 text-primary" />
               بيانات المنظمة
             </h1>
-            <p className="text-muted-foreground mt-1">
-              عرض وتعديل معلومات منظمتك
-            </p>
+            <p className="text-muted-foreground mt-1">عرض وتعديل معلومات منظمتك</p>
           </div>
           {!isEditing ? (
             <Button onClick={() => setIsEditing(true)}>
@@ -305,11 +306,7 @@ export default function OrganizationPage() {
                 إلغاء
               </Button>
               <Button onClick={form.handleSubmit(handleSubmit)} disabled={isSaving}>
-                {isSaving ? (
-                  <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="ml-2 h-4 w-4" />
-                )}
+                {isSaving ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <Save className="ml-2 h-4 w-4" />}
                 حفظ التغييرات
               </Button>
             </div>
@@ -337,7 +334,9 @@ export default function OrganizationPage() {
                     {organization.name_en && (
                       <div>
                         <label className="text-sm text-muted-foreground">اسم المنظمة (بالإنجليزية)</label>
-                        <p className="text-lg font-medium text-left" dir="ltr">{organization.name_en}</p>
+                        <p className="text-lg font-medium text-right" dir="ltr">
+                          {organization.name_en}
+                        </p>
                       </div>
                     )}
                     <div className="flex items-center gap-2">
@@ -457,9 +456,7 @@ export default function OrganizationPage() {
                   )}
 
                   {!organization.contact_email && !organization.contact_phone && !organization.website && (
-                    <p className="text-muted-foreground col-span-3">
-                      لم يتم إضافة معلومات تواصل بعد
-                    </p>
+                    <p className="text-muted-foreground col-span-3">لم يتم إضافة معلومات تواصل بعد</p>
                   )}
                 </div>
               </CardContent>
@@ -470,9 +467,7 @@ export default function OrganizationPage() {
           <Card>
             <CardHeader>
               <CardTitle>تعديل بيانات المنظمة</CardTitle>
-              <CardDescription>
-                قم بتحديث المعلومات ثم اضغط على "حفظ التغييرات"
-              </CardDescription>
+              <CardDescription>قم بتحديث المعلومات ثم اضغط على "حفظ التغييرات"</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...form}>
@@ -499,12 +494,7 @@ export default function OrganizationPage() {
                         <FormItem>
                           <FormLabel>اسم المنظمة (بالإنجليزية)</FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder="Organization Name"
-                              className="text-left"
-                              dir="ltr"
-                              {...field}
-                            />
+                            <Input placeholder="Organization Name" className="text-left" dir="ltr" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -605,12 +595,7 @@ export default function OrganizationPage() {
                           <FormControl>
                             <div className="relative">
                               <Phone className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                              <Input
-                                placeholder="+966 5x xxx xxxx"
-                                className="pr-10 text-left"
-                                dir="ltr"
-                                {...field}
-                              />
+                              <Input placeholder="+966 5x xxx xxxx" className="pr-10 text-left" dir="ltr" {...field} />
                             </div>
                           </FormControl>
                           <FormMessage />
