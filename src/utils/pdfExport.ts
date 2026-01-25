@@ -223,6 +223,120 @@ export async function exportResultsToPDF(
     }
   };
 
+  // Draw radar chart
+  const drawRadarChart = (
+    centerX: number,
+    centerY: number,
+    radius: number,
+    data: { label: string; value: number; shortLabel: string }[]
+  ) => {
+    const numPoints = data.length;
+    const angleStep = (2 * Math.PI) / numPoints;
+    const startAngle = -Math.PI / 2; // Start from top
+
+    // Draw grid circles (background)
+    pdf.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
+    pdf.setLineWidth(0.3);
+    
+    for (let level = 1; level <= 4; level++) {
+      const levelRadius = (radius * level) / 4;
+      pdf.circle(centerX, centerY, levelRadius, "S");
+    }
+
+    // Draw axis lines
+    pdf.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
+    pdf.setLineWidth(0.3);
+    
+    for (let i = 0; i < numPoints; i++) {
+      const angle = startAngle + i * angleStep;
+      const x = centerX + Math.cos(angle) * radius;
+      const y = centerY + Math.sin(angle) * radius;
+      pdf.line(centerX, centerY, x, y);
+    }
+
+    // Draw data polygon (filled)
+    const dataPoints: { x: number; y: number }[] = [];
+    
+    for (let i = 0; i < numPoints; i++) {
+      const angle = startAngle + i * angleStep;
+      const value = data[i].value / 100; // Normalize to 0-1
+      const pointRadius = radius * value;
+      dataPoints.push({
+        x: centerX + Math.cos(angle) * pointRadius,
+        y: centerY + Math.sin(angle) * pointRadius,
+      });
+    }
+
+    // Fill polygon with triangles from center (simpler approach without GState)
+    if (dataPoints.length > 0) {
+      // Draw filled area by creating triangles from center with lighter color
+      pdf.setFillColor(
+        Math.min(255, colors.primaryLight[0] + 40),
+        Math.min(255, colors.primaryLight[1] + 40),
+        Math.min(255, colors.primaryLight[2] + 40)
+      );
+      
+      for (let i = 0; i < dataPoints.length; i++) {
+        const current = dataPoints[i];
+        const next = dataPoints[(i + 1) % dataPoints.length];
+        
+        // Draw triangle
+        pdf.triangle(centerX, centerY, current.x, current.y, next.x, next.y, "F");
+      }
+      
+      // Draw outline
+      pdf.setDrawColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+      pdf.setLineWidth(2);
+      for (let i = 0; i < dataPoints.length; i++) {
+        const current = dataPoints[i];
+        const next = dataPoints[(i + 1) % dataPoints.length];
+        pdf.line(current.x, current.y, next.x, next.y);
+      }
+
+      // Draw data points
+      pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+      dataPoints.forEach((point) => {
+        pdf.circle(point.x, point.y, 2.5, "F");
+      });
+      
+      // Draw white center point
+      pdf.setFillColor(255, 255, 255);
+      pdf.circle(centerX, centerY, 3, "F");
+      pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+      pdf.circle(centerX, centerY, 1.5, "F");
+    }
+
+    // Draw labels
+    pdf.setFont(arabicFont, "normal");
+    pdf.setFontSize(8);
+    pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+    
+    for (let i = 0; i < numPoints; i++) {
+      const angle = startAngle + i * angleStep;
+      const labelRadius = radius + 12;
+      const x = centerX + Math.cos(angle) * labelRadius;
+      const y = centerY + Math.sin(angle) * labelRadius;
+      
+      // Adjust alignment based on position
+      let align: "center" | "right" | "left" = "center";
+      if (Math.cos(angle) < -0.3) align = "right";
+      else if (Math.cos(angle) > 0.3) align = "left";
+      
+      pdf.text(renderText(data[i].shortLabel), x, y + 2, { align });
+    }
+
+    // Draw percentage labels on grid
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(7);
+    pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+    
+    for (let level = 1; level <= 4; level++) {
+      const levelRadius = (radius * level) / 4;
+      const percentage = level * 25;
+      pdf.text(`${percentage}%`, centerX + 3, centerY - levelRadius + 3);
+    }
+  };
+
   // Get maturity color based on percentage
   const getMaturityColor = (percentage: number): ColorTuple => {
     if (percentage >= 75) return colors.success;
@@ -652,7 +766,7 @@ export async function exportResultsToPDF(
 
   yPos += dashboardBoxHeight + 20;
 
-  // ===================== RADAR CHART SECTION (Visual representation) =====================
+  // ===================== RADAR CHART SECTION =====================
   // Section title
   pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   pdf.rect(pageWidth - margin - 3, yPos - 2, 3, 16, "F");
@@ -660,48 +774,52 @@ export async function exportResultsToPDF(
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(16);
   pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-  pdf.text(renderText("نظرة شاملة على المعايير"), pageWidth - margin - 8, yPos + 10, { align: "right" });
+  pdf.text(renderText("الرسم الراداري للمعايير"), pageWidth - margin - 8, yPos + 10, { align: "right" });
 
-  yPos += 25;
+  yPos += 20;
 
-  // Create radar-like visualization with bars
+  // Prepare radar data
+  const radarData = dimensionScores.map((ds) => ({
+    label: ds.dimension.name_ar,
+    shortLabel: `م${ds.dimension.order_index}`,
+    value: ds.percentage,
+  }));
+
+  // Draw radar chart
   const radarCenterX = pageWidth / 2;
-  const radarStartY = yPos;
-  const barWidth = pageWidth - margin * 2 - 40;
-  const barHeight = 10;
-  const barSpacing = 18;
+  const radarCenterY = yPos + 55;
+  const radarRadius = 45;
+  
+  drawRadarChart(radarCenterX, radarCenterY, radarRadius, radarData);
 
+  yPos = radarCenterY + radarRadius + 25;
+
+  // Dimension labels legend (below radar)
+  pdf.setFont(arabicFont, "normal");
+  pdf.setFontSize(8);
+  pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+  
+  const legendColWidth = (pageWidth - margin * 2) / 3;
   dimensionScores.forEach((ds, index) => {
-    const currentY = radarStartY + (index * barSpacing);
+    const col = index % 3;
+    const row = Math.floor(index / 3);
+    const x = pageWidth - margin - (col * legendColWidth) - 5;
+    const y = yPos + (row * 10);
     
-    // Dimension name
+    // Colored dot
+    const dotColor = getMaturityColor(ds.percentage);
+    pdf.setFillColor(dotColor[0], dotColor[1], dotColor[2]);
+    pdf.circle(x, y - 1, 2, "F");
+    
+    // Label
     pdf.setFont(arabicFont, "normal");
-    pdf.setFontSize(9);
+    pdf.setFontSize(7);
     pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-    const dimName = `م${ds.dimension.order_index}: ${ds.dimension.name_ar}`;
-    pdf.text(renderText(dimName), pageWidth - margin - 5, currentY + barHeight / 2 + 1, { align: "right" });
-    
-    // Progress bar background
-    const progressBarX = margin + 25;
-    const progressBarWidth = barWidth - 100;
-    
-    pdf.setFillColor(colors.border[0], colors.border[1], colors.border[2]);
-    pdf.roundedRect(progressBarX, currentY, progressBarWidth, barHeight, 2, 2, "F");
-    
-    // Progress bar fill
-    const fillWidth = (progressBarWidth * ds.percentage) / 100;
-    const barColor = getMaturityColor(ds.percentage);
-    pdf.setFillColor(barColor[0], barColor[1], barColor[2]);
-    pdf.roundedRect(progressBarX, currentY, fillWidth, barHeight, 2, 2, "F");
-    
-    // Percentage value
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(9);
-    pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-    pdf.text(`${Math.round(ds.percentage)}%`, margin + 15, currentY + barHeight / 2 + 1, { align: "center" });
+    const legendText = `م${ds.dimension.order_index}: ${ds.dimension.name_ar.substring(0, 20)}`;
+    pdf.text(renderText(legendText), x - 5, y, { align: "right" });
   });
 
-  yPos = radarStartY + (dimensionScores.length * barSpacing) + 15;
+  yPos += Math.ceil(dimensionScores.length / 3) * 10 + 15;
 
   // Maturity levels legend
   pdf.setFontSize(8);
