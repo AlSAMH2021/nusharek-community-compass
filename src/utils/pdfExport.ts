@@ -351,7 +351,222 @@ export async function exportResultsToPDF(
   pdf.setTextColor(200, 200, 220);
   pdf.text(renderText("جميع الحقوق محفوظة © منصة نُشارك"), pageWidth / 2, pageHeight - 15, { align: "center" });
 
-  // ===================== PAGE 2: EXECUTIVE DASHBOARD =====================
+  // ===================== PAGE 2: EXECUTIVE SUMMARY =====================
+  pdf.addPage();
+  yPos = safeMargin;
+
+  // Page header
+  pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+  pdf.rect(0, 0, pageWidth, 20, "F");
+  
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFont(arabicFont, "normal");
+  pdf.setFontSize(12);
+  pdf.text(renderText("الملخص التنفيذي"), pageWidth / 2, 13, { align: "center" });
+
+  yPos = 35;
+
+  // Executive Summary Title
+  pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+  pdf.rect(pageWidth - margin - 3, yPos - 2, 3, 16, "F");
+  
+  pdf.setFont(arabicFont, "normal");
+  pdf.setFontSize(18);
+  pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+  pdf.text(renderText("نظرة عامة على نتائج التقييم"), pageWidth - margin - 8, yPos + 10, { align: "right" });
+
+  yPos += 25;
+
+  // Summary intro text
+  pdf.setFont(arabicFont, "normal");
+  pdf.setFontSize(11);
+  pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+  const summaryIntro = organization 
+    ? `يقدم هذا التقرير نتائج تقييم النضج في المشاركة المجتمعية لـ "${organization.name}". يتضمن الملخص أبرز النتائج والتوصيات الاستراتيجية.`
+    : "يقدم هذا التقرير نتائج تقييم النضج في المشاركة المجتمعية. يتضمن الملخص أبرز النتائج والتوصيات الاستراتيجية.";
+  
+  const introLines = pdf.splitTextToSize(renderText(summaryIntro), pageWidth - margin * 2 - 10);
+  introLines.forEach((line: string) => {
+    pdf.text(line, pageWidth - margin - 5, yPos, { align: "right" });
+    yPos += 6;
+  });
+
+  yPos += 10;
+
+  // Key metrics row
+  const metricBoxWidth = (pageWidth - margin * 2 - 16) / 3;
+  const metricBoxHeight = 50;
+
+  // Metric 1: Overall Score
+  pdf.setFillColor(colors.bgLight[0], colors.bgLight[1], colors.bgLight[2]);
+  pdf.setDrawColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+  pdf.setLineWidth(1.5);
+  pdf.roundedRect(pageWidth - margin - metricBoxWidth, yPos, metricBoxWidth, metricBoxHeight, 6, 6, "FD");
+  
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(24);
+  pdf.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+  const overallScore = Math.round(assessment.overall_score || 0);
+  pdf.text(`${overallScore}%`, pageWidth - margin - metricBoxWidth / 2, yPos + 28, { align: "center" });
+  
+  pdf.setFont(arabicFont, "normal");
+  pdf.setFontSize(10);
+  pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+  pdf.text(renderText("الدرجة الإجمالية"), pageWidth - margin - metricBoxWidth / 2, yPos + 42, { align: "center" });
+
+  // Metric 2: Maturity Level
+  const maturityForSummary = assessment.maturity_level ? maturityLabels[assessment.maturity_level] : null;
+  const maturityColorSummary = maturityForSummary?.color || colors.textMuted;
+  
+  pdf.setFillColor(colors.bgLight[0], colors.bgLight[1], colors.bgLight[2]);
+  pdf.setDrawColor(maturityColorSummary[0], maturityColorSummary[1], maturityColorSummary[2]);
+  pdf.roundedRect(pageWidth - margin - metricBoxWidth * 2 - 8, yPos, metricBoxWidth, metricBoxHeight, 6, 6, "FD");
+  
+  pdf.setFont(arabicFont, "normal");
+  pdf.setFontSize(20);
+  pdf.setTextColor(maturityColorSummary[0], maturityColorSummary[1], maturityColorSummary[2]);
+  pdf.text(renderText(maturityForSummary?.ar || "—"), pageWidth - margin - metricBoxWidth * 1.5 - 8, yPos + 28, { align: "center" });
+  
+  pdf.setFontSize(10);
+  pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+  pdf.text(renderText("مستوى النضج"), pageWidth - margin - metricBoxWidth * 1.5 - 8, yPos + 42, { align: "center" });
+
+  // Metric 3: Dimensions Count
+  pdf.setFillColor(colors.bgLight[0], colors.bgLight[1], colors.bgLight[2]);
+  pdf.setDrawColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
+  pdf.roundedRect(margin, yPos, metricBoxWidth, metricBoxHeight, 6, 6, "FD");
+  
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(24);
+  pdf.setTextColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
+  pdf.text(`${dimensionScores.length}`, margin + metricBoxWidth / 2, yPos + 28, { align: "center" });
+  
+  pdf.setFont(arabicFont, "normal");
+  pdf.setFontSize(10);
+  pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+  pdf.text(renderText("معايير التقييم"), margin + metricBoxWidth / 2, yPos + 42, { align: "center" });
+
+  yPos += metricBoxHeight + 20;
+
+  // Top 3 Results Section
+  pdf.setFillColor(colors.success[0], colors.success[1], colors.success[2]);
+  pdf.rect(pageWidth - margin - 3, yPos - 2, 3, 16, "F");
+  
+  pdf.setFont(arabicFont, "normal");
+  pdf.setFontSize(14);
+  pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+  pdf.text(renderText("أبرز ٣ نتائج"), pageWidth - margin - 8, yPos + 10, { align: "right" });
+
+  yPos += 20;
+
+  // Get top 3 performing dimensions
+  const top3Dimensions = [...dimensionScores]
+    .sort((a, b) => b.percentage - a.percentage)
+    .slice(0, 3);
+
+  top3Dimensions.forEach((ds, index) => {
+    const cardY = yPos;
+    const cardHeight = 22;
+    
+    // Card background
+    pdf.setFillColor(colors.bgLight[0], colors.bgLight[1], colors.bgLight[2]);
+    pdf.roundedRect(margin, cardY, pageWidth - margin * 2, cardHeight, 4, 4, "F");
+    
+    // Left accent based on score
+    const accentColor = getMaturityColor(ds.percentage);
+    pdf.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
+    pdf.roundedRect(pageWidth - margin - 3, cardY + 4, 2, cardHeight - 8, 1, 1, "F");
+    
+    // Number badge
+    pdf.setFillColor(colors.success[0], colors.success[1], colors.success[2]);
+    pdf.circle(pageWidth - margin - 14, cardY + cardHeight / 2, 6, "F");
+    
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(10);
+    pdf.setTextColor(255, 255, 255);
+    pdf.text(`${index + 1}`, pageWidth - margin - 14, cardY + cardHeight / 2 + 2, { align: "center" });
+    
+    // Dimension name
+    pdf.setFont(arabicFont, "normal");
+    pdf.setFontSize(11);
+    pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+    pdf.text(renderText(ds.dimension.name_ar), pageWidth - margin - 25, cardY + cardHeight / 2 + 2, { align: "right" });
+    
+    // Percentage badge
+    pdf.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
+    pdf.roundedRect(margin + 5, cardY + 5, 35, cardHeight - 10, 6, 6, "F");
+    
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(11);
+    pdf.setTextColor(255, 255, 255);
+    pdf.text(`${Math.round(ds.percentage)}%`, margin + 22.5, cardY + cardHeight / 2 + 2, { align: "center" });
+
+    yPos += cardHeight + 5;
+  });
+
+  yPos += 15;
+
+  // Top 3 Recommendations Section
+  pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+  pdf.rect(pageWidth - margin - 3, yPos - 2, 3, 16, "F");
+  
+  pdf.setFont(arabicFont, "normal");
+  pdf.setFontSize(14);
+  pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+  pdf.text(renderText("أهم ٣ توصيات"), pageWidth - margin - 8, yPos + 10, { align: "right" });
+
+  yPos += 20;
+
+  // Get top 3 priority recommendations (from lowest scoring dimensions)
+  const priorityRecommendations = sortedByPriority
+    .slice(0, 3)
+    .map((ds) => {
+      const name = ds.dimension.name_ar;
+      const percentage = ds.percentage;
+      if (percentage < 50) {
+        return `التركيز على بناء الأسس في "${name}" - الدرجة الحالية ${Math.round(percentage)}%`;
+      } else if (percentage < 75) {
+        return `تطوير ممارسات "${name}" للوصول للمستوى المثالي - الدرجة الحالية ${Math.round(percentage)}%`;
+      } else {
+        return `الحفاظ على التميز في "${name}" ومشاركة الممارسات الناجحة`;
+      }
+    });
+
+  priorityRecommendations.forEach((rec, index) => {
+    const cardY = yPos;
+    const cardHeight = 26;
+    
+    // Card background
+    pdf.setFillColor(colors.bgLight[0], colors.bgLight[1], colors.bgLight[2]);
+    pdf.roundedRect(margin, cardY, pageWidth - margin * 2, cardHeight, 4, 4, "F");
+    
+    // Left accent
+    pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+    pdf.roundedRect(pageWidth - margin - 3, cardY + 4, 2, cardHeight - 8, 1, 1, "F");
+    
+    // Number badge
+    pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+    pdf.circle(pageWidth - margin - 14, cardY + cardHeight / 2, 6, "F");
+    
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(10);
+    pdf.setTextColor(255, 255, 255);
+    pdf.text(`${index + 1}`, pageWidth - margin - 14, cardY + cardHeight / 2 + 2, { align: "center" });
+    
+    // Recommendation text
+    const recText = renderText(rec);
+    const maxWidth = pageWidth - margin * 2 - 35;
+    const lines = pdf.splitTextToSize(recText, maxWidth);
+    
+    pdf.setFont(arabicFont, "normal");
+    pdf.setFontSize(10);
+    pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+    pdf.text(lines[0], pageWidth - margin - 25, cardY + cardHeight / 2 + 2, { align: "right" });
+
+    yPos += cardHeight + 5;
+  });
+
+  // ===================== PAGE 3: EXECUTIVE DASHBOARD =====================
   pdf.addPage();
   yPos = safeMargin;
 
