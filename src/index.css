@@ -168,10 +168,10 @@
     position: absolute;
     inset: 0;
     background-image: url("/images/nusharek-pattern.svg");
-    background-size: 100px 100px;
+    background-size: 60px 60px;
     background-position: center;
     background-repeat: repeat;
-    opacity: 0.15;
+    opacity: 0.08;
   }
 
   .nusharek-logo-pattern::after {
