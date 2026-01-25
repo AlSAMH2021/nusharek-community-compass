@@ -403,23 +403,27 @@ export async function exportResultsToPDF(
   }
   
   // Small tagline below logo
+  pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(12);
   pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
   pdf.text(renderText("منصة التقييم الذاتي للمشاركة المجتمعية"), pageWidth / 2, 85, { align: "center" });
 
   // Main title
+  pdf.setFont(arabicFont, "normal");
   pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
   pdf.setFontSize(28);
   pdf.text(renderText("تقرير نتائج التقييم"), pageWidth / 2, pageHeight / 2 - 10, { align: "center" });
 
   // Organization name
   if (organization) {
+    pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(18);
     pdf.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
     pdf.text(renderText(organization.name), pageWidth / 2, pageHeight / 2 + 15, { align: "center" });
     
     // Organization type
     if (organization.type && orgTypeLabels[organization.type]) {
+      pdf.setFont(arabicFont, "normal");
       pdf.setFontSize(12);
       pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
       pdf.text(renderText(orgTypeLabels[organization.type]), pageWidth / 2, pageHeight / 2 + 28, { align: "center" });
@@ -428,11 +432,13 @@ export async function exportResultsToPDF(
 
   // Date at bottom
   const coverDate = formatDate(assessment.completed_at);
+  pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(11);
   pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
   pdf.text(renderText(coverDate), pageWidth / 2, pageHeight - 40, { align: "center" });
 
   // Copyright
+  pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(9);
   pdf.text(renderText("جميع الحقوق محفوظة © منصة نُشارك"), pageWidth / 2, pageHeight - 25, { align: "center" });
 
