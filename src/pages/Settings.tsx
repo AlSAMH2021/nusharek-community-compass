@@ -243,7 +243,7 @@ export default function SettingsPage() {
       <div className="space-y-6">
         {/* Header */}
         <div className="text-right">
-          <h1 className="text-2xl font-bold flex justify-end gap-3 flex-row-reverse">
+          <h1 className="text-2xl font-bold flex justify-start gap-3 flex-row-reverse">
             الإعدادات
             <Settings className="h-7 w-7 text-primary" />
           </h1>
@@ -252,7 +252,7 @@ export default function SettingsPage() {
 
         {/* Tabs */}
         <Tabs defaultValue="profile" className="space-y-6" dir="rtl">
-          <TabsList className="grid w-full max-w-md grid-cols-2 mr-auto ml-0">
+          <TabsList className="grid w-full max-w-md grid-cols-2 justify-start mr-auto ml-0">
             <TabsTrigger value="profile" className="gap-2 flex-row-reverse">
               الملف الشخصي
               <User className="h-4 w-4" />
