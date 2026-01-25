@@ -13,19 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Loader2,
-  Settings,
-  User,
-  Lock,
-  Mail,
-  Phone,
-  Save,
-  Eye,
-  EyeOff,
-  CheckCircle2,
-  AlertCircle,
-} from "lucide-react";
+import { Loader2, Settings, User, Lock, Mail, Phone, Save, Eye, EyeOff, CheckCircle2, AlertCircle } from "lucide-react";
 
 // Profile form schema
 const profileSchema = z.object({
@@ -35,14 +23,16 @@ const profileSchema = z.object({
 });
 
 // Password form schema
-const passwordSchema = z.object({
-  currentPassword: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
-  newPassword: z.string().min(6, "كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل"),
-  confirmPassword: z.string().min(6, "تأكيد كلمة المرور مطلوب"),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "كلمة المرور الجديدة وتأكيدها غير متطابقين",
-  path: ["confirmPassword"],
-});
+const passwordSchema = z
+  .object({
+    currentPassword: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
+    newPassword: z.string().min(6, "كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل"),
+    confirmPassword: z.string().min(6, "تأكيد كلمة المرور مطلوب"),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "كلمة المرور الجديدة وتأكيدها غير متطابقين",
+    path: ["confirmPassword"],
+  });
 
 type ProfileForm = z.infer<typeof profileSchema>;
 type PasswordForm = z.infer<typeof passwordSchema>;
@@ -90,11 +80,7 @@ export default function SettingsPage() {
 
       setIsLoading(true);
 
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
+      const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).single();
 
       if (error) {
         console.error("Error fetching profile:", error);
@@ -159,7 +145,7 @@ export default function SettingsPage() {
               full_name: values.fullName,
               phone: values.phone || null,
             }
-          : null
+          : null,
       );
 
       toast({
@@ -261,9 +247,7 @@ export default function SettingsPage() {
             الإعدادات
             <Settings className="h-7 w-7 text-primary" />
           </h1>
-          <p className="text-muted-foreground mt-1">
-            إدارة حسابك وإعدادات الأمان
-          </p>
+          <p className="text-muted-foreground mt-1">إدارة حسابك وإعدادات الأمان</p>
         </div>
 
         {/* Tabs */}
@@ -283,13 +267,11 @@ export default function SettingsPage() {
           <TabsContent value="profile">
             <Card>
               <CardHeader className="text-right">
-                <CardTitle className="flex items-center justify-start gap-2 flex-row-reverse">
+                <CardTitle className="flex justify-start gap-2 flex-row-reverse">
                   الملف الشخصي
                   <User className="h-5 w-5 text-primary" />
                 </CardTitle>
-                <CardDescription className="text-right">
-                  تحديث معلوماتك الشخصية وبيانات التواصل
-                </CardDescription>
+                <CardDescription className="text-right">تحديث معلوماتك الشخصية وبيانات التواصل</CardDescription>
               </CardHeader>
               <CardContent>
                 <Form {...profileForm}>
@@ -351,12 +333,7 @@ export default function SettingsPage() {
                           <FormControl>
                             <div className="relative">
                               <Phone className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                              <Input
-                                placeholder="+966 5x xxx xxxx"
-                                className="pr-10 text-right"
-                                dir="rtl"
-                                {...field}
-                              />
+                              <Input placeholder="+966 5x xxx xxxx" className="pr-10 text-right" dir="rtl" {...field} />
                             </div>
                           </FormControl>
                           <FormMessage />
@@ -419,11 +396,7 @@ export default function SettingsPage() {
                                 onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                                 className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                               >
-                                {showCurrentPassword ? (
-                                  <EyeOff className="h-4 w-4" />
-                                ) : (
-                                  <Eye className="h-4 w-4" />
-                                )}
+                                {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                               </button>
                             </div>
                           </FormControl>
@@ -456,11 +429,7 @@ export default function SettingsPage() {
                                 onClick={() => setShowNewPassword(!showNewPassword)}
                                 className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                               >
-                                {showNewPassword ? (
-                                  <EyeOff className="h-4 w-4" />
-                                ) : (
-                                  <Eye className="h-4 w-4" />
-                                )}
+                                {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                               </button>
                             </div>
                           </FormControl>
@@ -491,11 +460,7 @@ export default function SettingsPage() {
                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                 className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                               >
-                                {showConfirmPassword ? (
-                                  <EyeOff className="h-4 w-4" />
-                                ) : (
-                                  <Eye className="h-4 w-4" />
-                                )}
+                                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                               </button>
                             </div>
                           </FormControl>
