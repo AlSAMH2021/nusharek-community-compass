@@ -233,8 +233,8 @@ export default function Auth() {
                       control={signUpForm.control}
                       name="fullName"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>الاسم الكامل</FormLabel>
+                        <FormItem className="text-right">
+                          <FormLabel className="block text-right">الاسم الكامل</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <User className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
