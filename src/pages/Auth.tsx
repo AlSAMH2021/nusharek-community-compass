@@ -33,7 +33,9 @@ type SignUpForm = z.infer<typeof signUpSchema>;
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"signin" | "signup">("signin");
-  const { user, signIn, signUp } = useAuth();
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
+  const { user, signIn, signUp, resetPassword } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -68,6 +70,15 @@ export default function Auth() {
     if (!error) {
       navigate("/organization/setup");
     }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!forgotPasswordEmail) return;
+    setIsLoading(true);
+    await resetPassword(forgotPasswordEmail);
+    setIsLoading(false);
+    setShowForgotPassword(false);
+    setForgotPasswordEmail("");
   };
 
   return (
@@ -143,6 +154,16 @@ export default function Auth() {
                       )}
                     />
 
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setShowForgotPassword(true)}
+                        className="text-sm text-primary hover:underline"
+                      >
+                        نسيت كلمة المرور؟
+                      </button>
+                    </div>
+
                     <Button type="submit" className="w-full" disabled={isLoading}>
                       {isLoading ? (
                         <>
@@ -155,6 +176,54 @@ export default function Auth() {
                     </Button>
                   </form>
                 </Form>
+
+                {/* Forgot Password Modal */}
+                {showForgotPassword && (
+                  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <Card className="w-full max-w-sm animate-scale-in">
+                      <CardHeader>
+                        <CardTitle className="text-lg">استعادة كلمة المرور</CardTitle>
+                        <CardDescription>
+                          أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة تعيين كلمة المرور
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="relative">
+                          <Mail className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            type="email"
+                            placeholder="example@domain.com"
+                            className="pr-10 direction-ltr text-left"
+                            value={forgotPasswordEmail}
+                            onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={handleForgotPassword}
+                            disabled={isLoading || !forgotPasswordEmail}
+                            className="flex-1"
+                          >
+                            {isLoading ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              "إرسال"
+                            )}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setShowForgotPassword(false);
+                              setForgotPasswordEmail("");
+                            }}
+                          >
+                            إلغاء
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="signup">

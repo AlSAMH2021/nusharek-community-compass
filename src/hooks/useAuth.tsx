@@ -11,6 +11,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -142,6 +143,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const resetPassword = async (email: string) => {
+    const redirectUrl = `${window.location.origin}/auth`;
+    
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl,
+    });
+
+    if (error) {
+      toast({
+        title: "خطأ",
+        description: error.message,
+        variant: "destructive",
+      });
+      return { error };
+    }
+
+    toast({
+      title: "تم الإرسال",
+      description: "تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني",
+    });
+    return { error: null };
+  };
+
   return (
     <AuthContext.Provider value={{ 
       user, 
@@ -150,7 +174,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAdmin, 
       signUp, 
       signIn, 
-      signOut 
+      signOut,
+      resetPassword 
     }}>
       {children}
     </AuthContext.Provider>
