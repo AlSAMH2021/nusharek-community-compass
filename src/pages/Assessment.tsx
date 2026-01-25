@@ -15,7 +15,11 @@ import {
   CheckCircle2, 
   Loader2,
   Target,
-  ClipboardList
+  ClipboardList,
+  Play,
+  Clock,
+  ListChecks,
+  Info
 } from "lucide-react";
 
 export default function Assessment() {
@@ -23,6 +27,7 @@ export default function Assessment() {
   const { user } = useAuth();
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [initializing, setInitializing] = useState(true);
+  const [hasStarted, setHasStarted] = useState(false);
 
   const {
     loading,
@@ -71,10 +76,26 @@ export default function Assessment() {
       if (organizationId && !loading) {
         await initAssessment();
         setInitializing(false);
+        // If there are already answered questions, skip the welcome screen
+        if (answeredQuestions > 0) {
+          setHasStarted(true);
+        }
       }
     }
     init();
   }, [organizationId, loading, initAssessment]);
+
+  // Update hasStarted when answeredQuestions changes (for resuming)
+  useEffect(() => {
+    if (!initializing && answeredQuestions > 0) {
+      setHasStarted(true);
+    }
+  }, [initializing, answeredQuestions]);
+
+  const handleStartAssessment = () => {
+    setHasStarted(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const handleNext = () => {
     if (currentDimensionIndex < dimensions.length - 1) {
@@ -128,6 +149,89 @@ export default function Assessment() {
           <Target className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-2">لا توجد معايير للتقييم</h2>
           <p className="text-muted-foreground mb-6">يرجى التواصل مع الإدارة</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Welcome Screen
+  if (!hasStarted) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-3xl mx-auto space-y-8 py-8">
+          {/* Header */}
+          <div className="text-center space-y-4">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-4">
+              <ClipboardList className="h-10 w-10 text-primary" />
+            </div>
+            <h1 className="text-3xl font-bold">التقييم الذاتي للمشاركة المجتمعية</h1>
+            <p className="text-lg text-muted-foreground">
+              قيّم مستوى نضج منظمتك في المشاركة المجتمعية من خلال الإجابة على مجموعة من الأسئلة
+            </p>
+          </div>
+
+          {/* Info Cards */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card className="text-center p-6">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 mb-3">
+                <ListChecks className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <h3 className="font-semibold mb-1">{dimensions.length} معايير</h3>
+              <p className="text-sm text-muted-foreground">معايير شاملة للتقييم</p>
+            </Card>
+
+            <Card className="text-center p-6">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 mb-3">
+                <Target className="h-6 w-6 text-green-600 dark:text-green-400" />
+              </div>
+              <h3 className="font-semibold mb-1">{totalQuestions} سؤال</h3>
+              <p className="text-sm text-muted-foreground">إجمالي الأسئلة</p>
+            </Card>
+
+            <Card className="text-center p-6">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 mb-3">
+                <Clock className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+              </div>
+              <h3 className="font-semibold mb-1">15-30 دقيقة</h3>
+              <p className="text-sm text-muted-foreground">الوقت المتوقع</p>
+            </Card>
+          </div>
+
+          {/* Instructions Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 justify-end flex-row-reverse">
+                <Info className="h-5 w-5 text-primary" />
+                تعليمات قبل البدء
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-right">
+              <p className="text-muted-foreground">
+                • اقرأ كل سؤال بعناية واختر الإجابة التي تعكس الوضع الحالي لمنظمتك
+              </p>
+              <p className="text-muted-foreground">
+                • يتم حفظ إجاباتك تلقائياً، يمكنك التوقف والعودة لاحقاً
+              </p>
+              <p className="text-muted-foreground">
+                • يمكنك التنقل بين المعايير والعودة لتعديل إجاباتك
+              </p>
+              <p className="text-muted-foreground">
+                • عند الانتهاء ستحصل على تقرير شامل بمستوى النضج
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Start Button */}
+          <div className="text-center">
+            <Button 
+              size="lg" 
+              onClick={handleStartAssessment}
+              className="px-12 py-6 text-lg gap-3"
+            >
+              <Play className="h-5 w-5" />
+              ابدأ التقييم
+            </Button>
+          </div>
         </div>
       </DashboardLayout>
     );
