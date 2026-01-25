@@ -176,6 +176,7 @@
     background-repeat: no-repeat;
     opacity: 0.12;
     transform: rotate(-15deg);
+    animation: float-pattern-1 20s ease-in-out infinite;
   }
 
   /* Bottom-right corner pattern */
@@ -191,6 +192,25 @@
     background-repeat: no-repeat;
     opacity: 0.12;
     transform: rotate(165deg);
+    animation: float-pattern-2 25s ease-in-out infinite;
+  }
+
+  @keyframes float-pattern-1 {
+    0%, 100% {
+      transform: rotate(-15deg) translate(0, 0);
+    }
+    50% {
+      transform: rotate(-10deg) translate(15px, 15px);
+    }
+  }
+
+  @keyframes float-pattern-2 {
+    0%, 100% {
+      transform: rotate(165deg) translate(0, 0);
+    }
+    50% {
+      transform: rotate(170deg) translate(-15px, -15px);
+    }
   }
   
   /* Gradient utilities */
