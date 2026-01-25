@@ -96,6 +96,7 @@ export async function exportResultsToPDF(
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
   const margin = 18;
+  const safeMargin = 25; // Safe area for logo/branding
   let yPos = 25;
 
   // Brand colors - using tuples for jspdf-autotable compatibility
@@ -104,18 +105,18 @@ export async function exportResultsToPDF(
     primary: [108, 58, 237] as ColorTuple, // Nusharek Purple (#6C3AED)
     primaryDark: [91, 33, 182] as ColorTuple,
     primaryLight: [139, 92, 246] as ColorTuple,
-    secondary: [15, 23, 42] as ColorTuple, // Navy
+    secondary: [30, 58, 95] as ColorTuple, // Navy (#1E3A5F)
     teal: [20, 184, 166] as ColorTuple,
-    coral: [248, 113, 113] as ColorTuple,
-    gold: [251, 191, 36] as ColorTuple,
+    coral: [249, 115, 22] as ColorTuple,
+    gold: [245, 158, 11] as ColorTuple,
     text: [30, 41, 59] as ColorTuple,
     textMuted: [100, 116, 139] as ColorTuple,
     border: [226, 232, 240] as ColorTuple,
     bgLight: [248, 250, 252] as ColorTuple,
     white: [255, 255, 255] as ColorTuple,
-    success: [21, 128, 61] as ColorTuple,
-    warning: [180, 83, 9] as ColorTuple,
-    danger: [185, 28, 28] as ColorTuple,
+    success: [20, 184, 166] as ColorTuple, // Teal for مثالي
+    warning: [245, 158, 11] as ColorTuple, // Gold for ناشئ
+    danger: [249, 115, 22] as ColorTuple, // Coral for أساسي
   };
 
   // Helper function for Arabic text
@@ -148,35 +149,25 @@ export async function exportResultsToPDF(
   };
 
   const checkPageBreak = (neededSpace: number = 30): void => {
-    if (yPos > pageHeight - neededSpace) {
+    if (yPos > pageHeight - neededSpace - 20) {
       pdf.addPage();
-      yPos = 25;
+      yPos = 30;
     }
   };
 
-  // Draw decorative circle pattern
-  const drawDecoPattern = (x: number, y: number, size: number, color: number[], opacity: number = 1) => {
-    pdf.setDrawColor(color[0], color[1], color[2]);
-    pdf.setLineWidth(0.5 * opacity);
-    pdf.circle(x, y, size, "S");
-    pdf.circle(x, y, size * 0.65, "S");
-    pdf.circle(x, y, size * 0.35, "S");
-  };
-
-  // Draw curved grid pattern (Nusharek portal pattern)
-  const drawPortalPattern = (centerX: number, centerY: number, size: number) => {
+  // Draw decorative portal pattern (curved grid)
+  const drawPortalPattern = (centerX: number, centerY: number, size: number, opacity: number = 0.15) => {
     pdf.setDrawColor(255, 255, 255);
     pdf.setLineWidth(0.3);
     
-    // Draw arcs
-    for (let i = 1; i <= 4; i++) {
-      const radius = size * (i / 4);
-      // Draw partial circles (arcs simulation)
+    // Draw concentric arcs
+    for (let i = 1; i <= 5; i++) {
+      const radius = size * (i / 5);
       pdf.circle(centerX, centerY, radius, "S");
     }
     
     // Draw radial lines
-    for (let angle = 0; angle < 360; angle += 45) {
+    for (let angle = 0; angle < 360; angle += 30) {
       const rad = (angle * Math.PI) / 180;
       const x2 = centerX + Math.cos(rad) * size;
       const y2 = centerY + Math.sin(rad) * size;
@@ -184,264 +175,369 @@ export async function exportResultsToPDF(
     }
   };
 
-  // ===================== COVER PAGE =====================
-  // Full page purple background
+  // Draw decorative corner element
+  const drawCornerDecoration = (x: number, y: number, size: number, flip: boolean = false) => {
+    pdf.setDrawColor(255, 255, 255);
+    pdf.setLineWidth(0.5);
+    
+    const dir = flip ? -1 : 1;
+    for (let i = 0; i < 3; i++) {
+      pdf.line(x, y + (i * 4) * dir, x + size - (i * 8), y + (i * 4) * dir);
+    }
+  };
+
+  // Draw gauge arc for score visualization
+  const drawGaugeArc = (
+    centerX: number, 
+    centerY: number, 
+    radius: number, 
+    percentage: number,
+    bgColor: number[],
+    fgColor: number[]
+  ) => {
+    const startAngle = Math.PI;
+    const endAngle = 0;
+    const arcAngle = startAngle + (endAngle - startAngle) * (percentage / 100);
+    
+    // Background arc
+    pdf.setDrawColor(bgColor[0], bgColor[1], bgColor[2]);
+    pdf.setLineWidth(6);
+    
+    // Draw background arc segments
+    for (let a = startAngle; a <= endAngle + 0.01; a += 0.1) {
+      const x1 = centerX + Math.cos(a) * radius;
+      const y1 = centerY + Math.sin(a) * radius;
+      const x2 = centerX + Math.cos(a + 0.1) * radius;
+      const y2 = centerY + Math.sin(a + 0.1) * radius;
+      pdf.line(x1, y1, x2, y2);
+    }
+    
+    // Foreground arc (score)
+    pdf.setDrawColor(fgColor[0], fgColor[1], fgColor[2]);
+    for (let a = startAngle; a <= arcAngle; a += 0.05) {
+      const x1 = centerX + Math.cos(a) * radius;
+      const y1 = centerY + Math.sin(a) * radius;
+      const x2 = centerX + Math.cos(a + 0.05) * radius;
+      const y2 = centerY + Math.sin(a + 0.05) * radius;
+      pdf.line(x1, y1, x2, y2);
+    }
+  };
+
+  // Get maturity color based on percentage
+  const getMaturityColor = (percentage: number): ColorTuple => {
+    if (percentage >= 75) return colors.success;
+    if (percentage >= 50) return colors.warning;
+    return colors.danger;
+  };
+
+  const getMaturityLabel = (percentage: number): string => {
+    if (percentage >= 75) return "مثالي";
+    if (percentage >= 50) return "ناشئ";
+    return "أساسي";
+  };
+
+  // Format date in Arabic
+  const formatDate = (dateStr: string | null): string => {
+    if (!dateStr) return new Date().toLocaleDateString("ar-SA", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    return new Date(dateStr).toLocaleDateString("ar-SA", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  // Sort dimension scores by percentage for recommendations (lowest first)
+  const sortedByPriority = [...dimensionScores].sort((a, b) => a.percentage - b.percentage);
+
+  // ===================== PAGE 1: COVER PAGE =====================
+  // Full page purple background with gradient effect
   pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   pdf.rect(0, 0, pageWidth, pageHeight, "F");
 
-  // Decorative darker bottom section
+  // Darker bottom section for depth
   pdf.setFillColor(colors.primaryDark[0], colors.primaryDark[1], colors.primaryDark[2]);
-  pdf.rect(0, pageHeight - 60, pageWidth, 60, "F");
+  pdf.rect(0, pageHeight - 80, pageWidth, 80, "F");
 
-  // Draw portal patterns
-  drawPortalPattern(pageWidth - 40, 50, 35);
-  drawPortalPattern(40, pageHeight - 80, 25);
+  // Decorative portal patterns
+  drawPortalPattern(pageWidth - 35, 45, 40);
+  drawPortalPattern(35, pageHeight - 100, 30);
   
-  // Decorative circles
+  // Decorative lines
   pdf.setDrawColor(255, 255, 255);
-  pdf.setLineWidth(0.4);
-  drawDecoPattern(pageWidth - 30, pageHeight / 2, 20, colors.white, 0.5);
-  drawDecoPattern(35, 120, 15, colors.white, 0.5);
+  pdf.setLineWidth(0.3);
+  drawCornerDecoration(pageWidth - 30, 15, 25);
+  drawCornerDecoration(30, pageHeight - 25, 25, true);
 
-  // Main title - Large
+  // Logo safe area indicator (top section)
+  pdf.setFillColor(255, 255, 255);
+  pdf.setDrawColor(colors.primaryLight[0], colors.primaryLight[1], colors.primaryLight[2]);
+  
+  // Platform name at top
   pdf.setTextColor(255, 255, 255);
   pdf.setFont(arabicFont, "normal");
-  pdf.setFontSize(42);
-  pdf.text(renderText("تقرير التقييم"), pageWidth / 2, pageHeight / 2 - 35, { align: "center" });
+  pdf.setFontSize(16);
+  pdf.text(renderText("منصة نُشارك"), pageWidth / 2, 35, { align: "center" });
+  
+  // Decorative line under platform name
+  pdf.setDrawColor(colors.gold[0], colors.gold[1], colors.gold[2]);
+  pdf.setLineWidth(1);
+  pdf.line(pageWidth / 2 - 25, 42, pageWidth / 2 + 25, 42);
+
+  // Main title - Large and prominent
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFont(arabicFont, "normal");
+  pdf.setFontSize(38);
+  pdf.text(renderText("تقرير نتائج تقييم النضج"), pageWidth / 2, pageHeight / 2 - 25, { align: "center" });
 
   // Subtitle
-  pdf.setFontSize(28);
-  pdf.text(renderText("المشاركة المجتمعية"), pageWidth / 2, pageHeight / 2, { align: "center" });
+  pdf.setFontSize(20);
+  pdf.setTextColor(220, 220, 240);
+  pdf.text(renderText("المشاركة المجتمعية"), pageWidth / 2, pageHeight / 2 + 5, { align: "center" });
 
-  // Decorative line
+  // Decorative gold line
   pdf.setDrawColor(colors.gold[0], colors.gold[1], colors.gold[2]);
   pdf.setLineWidth(2);
-  pdf.line(pageWidth / 2 - 50, pageHeight / 2 + 15, pageWidth / 2 + 50, pageHeight / 2 + 15);
+  pdf.line(pageWidth / 2 - 60, pageHeight / 2 + 20, pageWidth / 2 + 60, pageHeight / 2 + 20);
 
-  // Organization name box
+  // Organization info box
   if (organization) {
     // Semi-transparent white box
     pdf.setFillColor(255, 255, 255);
-    const orgBoxWidth = 140;
-    const orgBoxHeight = 30;
+    const orgBoxWidth = 150;
+    const orgBoxHeight = 50;
     const orgBoxX = (pageWidth - orgBoxWidth) / 2;
-    const orgBoxY = pageHeight / 2 + 30;
-    pdf.roundedRect(orgBoxX, orgBoxY, orgBoxWidth, orgBoxHeight, 4, 4, "F");
+    const orgBoxY = pageHeight / 2 + 35;
+    pdf.roundedRect(orgBoxX, orgBoxY, orgBoxWidth, orgBoxHeight, 6, 6, "F");
     
-    pdf.setFont(arabicFont, "normal");
-    pdf.setFontSize(16);
-    pdf.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-    pdf.text(renderText(organization.name), pageWidth / 2, orgBoxY + 19, { align: "center" });
-  }
-
-  // Platform name
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(18);
-  pdf.text(renderText("منصة نُشارك"), pageWidth / 2, pageHeight - 85, { align: "center" });
-
-  // Date at bottom
-  const coverDate = assessment.completed_at
-    ? new Date(assessment.completed_at).toLocaleDateString("ar-SA", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
-    : new Date().toLocaleDateString("ar-SA", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-  
-  pdf.setFontSize(12);
-  pdf.setTextColor(200, 200, 220);
-  pdf.text(renderText(coverDate), pageWidth / 2, pageHeight - 25, { align: "center" });
-
-  // ===================== NEW PAGE - CONTENT STARTS =====================
-  pdf.addPage();
-  yPos = 25;
-
-  // ===================== HEADER =====================
-  // Gradient-like header with primary color
-  pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-  pdf.rect(0, 0, pageWidth, 50, "F");
-  
-  // Decorative darker strip
-  pdf.setFillColor(colors.primaryDark[0], colors.primaryDark[1], colors.primaryDark[2]);
-  pdf.rect(0, 44, pageWidth, 6, "F");
-
-  // Decorative patterns
-  drawDecoPattern(pageWidth - 22, 18, 10, colors.white);
-  drawDecoPattern(22, 30, 7, colors.white);
-
-  // Main title
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFont(arabicFont, "normal");
-  pdf.setFontSize(22);
-  pdf.text(renderText("تقرير تقييم المشاركة المجتمعية"), pageWidth / 2, 22, { align: "center" });
-
-  // Subtitle
-  pdf.setFontSize(11);
-  pdf.setTextColor(220, 220, 240);
-  pdf.text(renderText("منصة نُشارك للتقييم الذاتي"), pageWidth / 2, 36, { align: "center" });
-
-  yPos = 62;
-
-  // ===================== ORGANIZATION INFO CARD =====================
-  const orgCardHeight = organization?.sector ? 38 : 30;
-  
-  // Card shadow effect
-  pdf.setFillColor(200, 200, 200);
-  pdf.roundedRect(margin + 1, yPos + 1, pageWidth - margin * 2, orgCardHeight, 4, 4, "F");
-  
-  // Main card
-  pdf.setFillColor(colors.white[0], colors.white[1], colors.white[2]);
-  pdf.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
-  pdf.setLineWidth(0.5);
-  pdf.roundedRect(margin, yPos, pageWidth - margin * 2, orgCardHeight, 4, 4, "FD");
-
-  // Left accent bar
-  pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-  pdf.roundedRect(pageWidth - margin - 4, yPos + 4, 3, orgCardHeight - 8, 1.5, 1.5, "F");
-
-  yPos += 12;
-
-  if (organization) {
     // Organization name
     pdf.setFont(arabicFont, "normal");
-    pdf.setFontSize(15);
-    pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-    pdf.text(renderText(organization.name), pageWidth - margin - 10, yPos, { align: "right" });
+    pdf.setFontSize(14);
+    pdf.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+    pdf.text(renderText("الجهة المستفيدة"), pageWidth / 2, orgBoxY + 14, { align: "center" });
     
-    yPos += 9;
+    pdf.setFontSize(18);
+    pdf.setTextColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
+    pdf.text(renderText(organization.name), pageWidth / 2, orgBoxY + 30, { align: "center" });
     
-    // Organization details row
-    const details: string[] = [];
+    // Organization type if available
     if (organization.type && orgTypeLabels[organization.type]) {
-      details.push(orgTypeLabels[organization.type]);
-    }
-    if (organization.sector) {
-      details.push(organization.sector);
-    }
-    if (organization.city) {
-      details.push(organization.city);
-    }
-    
-    if (details.length > 0) {
-      pdf.setFontSize(10);
+      pdf.setFontSize(11);
       pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-      pdf.text(renderText(details.join(" • ")), pageWidth - margin - 10, yPos, { align: "right" });
-      yPos += 8;
+      pdf.text(renderText(orgTypeLabels[organization.type]), pageWidth / 2, orgBoxY + 42, { align: "center" });
     }
   }
 
-  // Date badge
-  const completedDate = assessment.completed_at
-    ? new Date(assessment.completed_at).toLocaleDateString("ar-SA", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
-    : "قيد التنفيذ";
+  // Assessment date and type at bottom
+  const coverDate = formatDate(assessment.completed_at);
   
-  pdf.setFontSize(9);
+  // Date box
+  pdf.setFillColor(255, 255, 255);
+  pdf.roundedRect(pageWidth / 2 - 50, pageHeight - 55, 100, 25, 4, 4, "F");
+  
+  pdf.setFontSize(10);
   pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-  const dateLabel = renderText(`تاريخ التقييم: ${completedDate}`);
-  pdf.text(dateLabel, margin + 8, yPos - 2);
-
-  yPos = organization?.sector ? yPos + 18 : yPos + 14;
-
-  // ===================== SCORE SUMMARY SECTION =====================
-  // Main score container
-  const scoreBoxWidth = (pageWidth - margin * 2 - 8) / 2;
-  const scoreBoxHeight = 55;
+  pdf.text(renderText("تاريخ التقييم"), pageWidth / 2, pageHeight - 47, { align: "center" });
   
-  // Overall Score Box (Right)
-  pdf.setFillColor(colors.bgLight[0], colors.bgLight[1], colors.bgLight[2]);
-  pdf.roundedRect(pageWidth / 2 + 4, yPos, scoreBoxWidth, scoreBoxHeight, 4, 4, "F");
-  
-  // Score circle background
-  const scoreCircleX = pageWidth / 2 + 4 + scoreBoxWidth / 2;
-  const scoreCircleY = yPos + scoreBoxHeight / 2 + 2;
+  pdf.setFontSize(12);
+  pdf.setTextColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
+  pdf.text(renderText(coverDate), pageWidth / 2, pageHeight - 37, { align: "center" });
+
+  // Copyright at very bottom
+  pdf.setFontSize(9);
+  pdf.setTextColor(200, 200, 220);
+  pdf.text(renderText("جميع الحقوق محفوظة © منصة نُشارك"), pageWidth / 2, pageHeight - 15, { align: "center" });
+
+  // ===================== PAGE 2: EXECUTIVE DASHBOARD =====================
+  pdf.addPage();
+  yPos = safeMargin;
+
+  // Page header
   pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-  pdf.circle(scoreCircleX, scoreCircleY, 18, "F");
+  pdf.rect(0, 0, pageWidth, 20, "F");
   
-  // Score value
-  pdf.setFont("helvetica", "bold");
-  pdf.setFontSize(22);
   pdf.setTextColor(255, 255, 255);
-  pdf.text(`${Math.round(assessment.overall_score || 0)}%`, scoreCircleX, scoreCircleY + 3, { align: "center" });
-  
-  // Score label
   pdf.setFont(arabicFont, "normal");
-  pdf.setFontSize(11);
-  pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-  pdf.text(renderText("الدرجة الإجمالية"), scoreCircleX, yPos + 10, { align: "center" });
+  pdf.setFontSize(12);
+  pdf.text(renderText("لوحة المؤشرات التنفيذية"), pageWidth / 2, 13, { align: "center" });
 
-  // Maturity Level Box (Left)
+  yPos = 35;
+
+  // Section title
+  pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+  pdf.rect(pageWidth - margin - 3, yPos - 2, 3, 16, "F");
+  
+  pdf.setFont(arabicFont, "normal");
+  pdf.setFontSize(18);
+  pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+  pdf.text(renderText("ملخص الأداء العام"), pageWidth - margin - 8, yPos + 10, { align: "right" });
+
+  yPos += 28;
+
+  // Two main score boxes
+  const dashboardBoxWidth = (pageWidth - margin * 2 - 12) / 2;
+  const dashboardBoxHeight = 70;
+
+  // Overall Score Box (Right side)
+  pdf.setFillColor(colors.bgLight[0], colors.bgLight[1], colors.bgLight[2]);
+  pdf.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
+  pdf.setLineWidth(0.5);
+  pdf.roundedRect(pageWidth / 2 + 6, yPos, dashboardBoxWidth, dashboardBoxHeight, 6, 6, "FD");
+  
+  // Score gauge visualization
+  const scoreValue = Math.round(assessment.overall_score || 0);
+  const gaugeX = pageWidth / 2 + 6 + dashboardBoxWidth / 2;
+  const gaugeY = yPos + dashboardBoxHeight / 2 + 8;
+  const gaugeRadius = 25;
+  
+  // Draw gauge arc
+  drawGaugeArc(gaugeX, gaugeY, gaugeRadius, scoreValue, colors.border, colors.primary);
+  
+  // Score value in center
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(24);
+  pdf.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+  pdf.text(`${scoreValue}%`, gaugeX, gaugeY + 3, { align: "center" });
+  
+  // Label
+  pdf.setFont(arabicFont, "normal");
+  pdf.setFontSize(12);
+  pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+  pdf.text(renderText("الدرجة الإجمالية"), gaugeX, yPos + 14, { align: "center" });
+
+  // Maturity Level Box (Left side)
   const maturity = assessment.maturity_level ? maturityLabels[assessment.maturity_level] : null;
   const maturityBgColor = maturity?.bgColor || colors.bgLight;
   
   pdf.setFillColor(maturityBgColor[0], maturityBgColor[1], maturityBgColor[2]);
-  pdf.roundedRect(margin, yPos, scoreBoxWidth, scoreBoxHeight, 4, 4, "F");
-  
-  // Maturity badge
-  const maturityBadgeX = margin + scoreBoxWidth / 2;
-  const maturityBadgeY = yPos + scoreBoxHeight / 2 + 2;
-  
-  if (maturity) {
-    // Badge background
-    pdf.setFillColor(maturity.color[0], maturity.color[1], maturity.color[2]);
-    pdf.roundedRect(maturityBadgeX - 22, maturityBadgeY - 10, 44, 18, 9, 9, "F");
-    
-    // Badge text
-    pdf.setFont(arabicFont, "normal");
-    pdf.setFontSize(14);
-    pdf.setTextColor(255, 255, 255);
-    pdf.text(renderText(maturity.ar), maturityBadgeX, maturityBadgeY + 2, { align: "center" });
-  } else {
-    pdf.setFont(arabicFont, "normal");
-    pdf.setFontSize(20);
-    pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-    pdf.text("—", maturityBadgeX, maturityBadgeY + 4, { align: "center" });
-  }
+  pdf.roundedRect(margin, yPos, dashboardBoxWidth, dashboardBoxHeight, 6, 6, "F");
   
   // Maturity label
   pdf.setFont(arabicFont, "normal");
-  pdf.setFontSize(11);
+  pdf.setFontSize(12);
   pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-  pdf.text(renderText("مستوى النضج"), maturityBadgeX, yPos + 10, { align: "center" });
+  pdf.text(renderText("مستوى النضج"), margin + dashboardBoxWidth / 2, yPos + 14, { align: "center" });
+  
+  // Maturity badge
+  if (maturity) {
+    const badgeX = margin + dashboardBoxWidth / 2;
+    const badgeY = yPos + dashboardBoxHeight / 2 + 5;
+    
+    pdf.setFillColor(maturity.color[0], maturity.color[1], maturity.color[2]);
+    pdf.roundedRect(badgeX - 28, badgeY - 12, 56, 22, 11, 11, "F");
+    
+    pdf.setFont(arabicFont, "normal");
+    pdf.setFontSize(16);
+    pdf.setTextColor(255, 255, 255);
+    pdf.text(renderText(maturity.ar), badgeX, badgeY + 3, { align: "center" });
+  }
 
-  yPos += scoreBoxHeight + 15;
+  yPos += dashboardBoxHeight + 20;
 
-  // ===================== DIMENSION SCORES TABLE =====================
-  checkPageBreak(70);
-
-  // Section header with line
+  // ===================== RADAR CHART SECTION (Visual representation) =====================
+  // Section title
   pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-  pdf.rect(pageWidth - margin - 3, yPos - 2, 3, 14, "F");
+  pdf.rect(pageWidth - margin - 3, yPos - 2, 3, 16, "F");
   
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(16);
   pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-  pdf.text(renderText("تفاصيل نتائج المعايير"), pageWidth - margin - 8, yPos + 8, { align: "right" });
-  
-  yPos += 18;
+  pdf.text(renderText("نظرة شاملة على المعايير"), pageWidth - margin - 8, yPos + 10, { align: "right" });
 
-  // Prepare table data with status colors
-  const tableData = dimensionScores.map((ds) => {
-    let status: string;
-    let statusColor: number[];
+  yPos += 25;
+
+  // Create radar-like visualization with bars
+  const radarCenterX = pageWidth / 2;
+  const radarStartY = yPos;
+  const barWidth = pageWidth - margin * 2 - 40;
+  const barHeight = 10;
+  const barSpacing = 18;
+
+  dimensionScores.forEach((ds, index) => {
+    const currentY = radarStartY + (index * barSpacing);
     
-    if (ds.percentage >= 75) {
-      status = "مثالي";
-      statusColor = colors.success;
-    } else if (ds.percentage >= 50) {
-      status = "ناشئ";
-      statusColor = colors.warning;
-    } else {
-      status = "أساسي";
-      statusColor = colors.danger;
-    }
+    // Dimension name
+    pdf.setFont(arabicFont, "normal");
+    pdf.setFontSize(9);
+    pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+    const dimName = `م${ds.dimension.order_index}: ${ds.dimension.name_ar}`;
+    pdf.text(renderText(dimName), pageWidth - margin - 5, currentY + barHeight / 2 + 1, { align: "right" });
+    
+    // Progress bar background
+    const progressBarX = margin + 25;
+    const progressBarWidth = barWidth - 100;
+    
+    pdf.setFillColor(colors.border[0], colors.border[1], colors.border[2]);
+    pdf.roundedRect(progressBarX, currentY, progressBarWidth, barHeight, 2, 2, "F");
+    
+    // Progress bar fill
+    const fillWidth = (progressBarWidth * ds.percentage) / 100;
+    const barColor = getMaturityColor(ds.percentage);
+    pdf.setFillColor(barColor[0], barColor[1], barColor[2]);
+    pdf.roundedRect(progressBarX, currentY, fillWidth, barHeight, 2, 2, "F");
+    
+    // Percentage value
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(9);
+    pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+    pdf.text(`${Math.round(ds.percentage)}%`, margin + 15, currentY + barHeight / 2 + 1, { align: "center" });
+  });
+
+  yPos = radarStartY + (dimensionScores.length * barSpacing) + 15;
+
+  // Maturity levels legend
+  pdf.setFontSize(8);
+  const legendItems = [
+    { label: "مثالي (75-100%)", color: colors.success },
+    { label: "ناشئ (50-74%)", color: colors.warning },
+    { label: "أساسي (0-49%)", color: colors.danger },
+  ];
+  
+  const legendStartX = pageWidth - margin - 10;
+  legendItems.forEach((item, index) => {
+    const x = legendStartX - (index * 55);
+    
+    pdf.setFillColor(item.color[0], item.color[1], item.color[2]);
+    pdf.circle(x, yPos, 2.5, "F");
+    
+    pdf.setFont(arabicFont, "normal");
+    pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+    pdf.text(renderText(item.label), x - 5, yPos + 1, { align: "right" });
+  });
+
+  // ===================== PAGE 3: DETAILED DATA TABLE =====================
+  pdf.addPage();
+  yPos = safeMargin;
+
+  // Page header
+  pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+  pdf.rect(0, 0, pageWidth, 20, "F");
+  
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFont(arabicFont, "normal");
+  pdf.setFontSize(12);
+  pdf.text(renderText("البيانات التفصيلية"), pageWidth / 2, 13, { align: "center" });
+
+  yPos = 35;
+
+  // Section title
+  pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+  pdf.rect(pageWidth - margin - 3, yPos - 2, 3, 16, "F");
+  
+  pdf.setFont(arabicFont, "normal");
+  pdf.setFontSize(16);
+  pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+  pdf.text(renderText("تفاصيل نتائج المعايير"), pageWidth - margin - 8, yPos + 10, { align: "right" });
+
+  yPos += 22;
+
+  // Prepare table data
+  const tableData = dimensionScores.map((ds) => {
+    const status = getMaturityLabel(ds.percentage);
+    const statusColor = getMaturityColor(ds.percentage);
     
     return {
       data: [
@@ -452,6 +548,7 @@ export async function exportResultsToPDF(
         ds.dimension.order_index.toString(),
       ],
       statusColor,
+      percentage: ds.percentage,
     };
   });
 
@@ -472,10 +569,10 @@ export async function exportResultsToPDF(
       font: arabicFont,
       halign: "center",
       valign: "middle",
-      cellPadding: 5,
+      cellPadding: 6,
       fontSize: 10,
       lineColor: colors.border,
-      lineWidth: 0,
+      lineWidth: 0.3,
     },
     headStyles: {
       fillColor: colors.secondary,
@@ -484,7 +581,7 @@ export async function exportResultsToPDF(
       font: arabicFont,
       halign: "center",
       fontStyle: "normal",
-      cellPadding: 6,
+      cellPadding: 7,
     },
     bodyStyles: {
       fontSize: 10,
@@ -495,22 +592,43 @@ export async function exportResultsToPDF(
       fillColor: colors.bgLight,
     },
     columnStyles: {
-      0: { cellWidth: 26, halign: "center" },
+      0: { cellWidth: 28, halign: "center" },
       1: { cellWidth: 24, halign: "center" },
-      2: { cellWidth: 28, halign: "center" },
-      3: { cellWidth: 72, halign: "right" },
+      2: { cellWidth: 30, halign: "center" },
+      3: { cellWidth: 75, halign: "right" },
       4: { cellWidth: 14, halign: "center", fillColor: colors.bgLight },
     },
     margin: { left: margin, right: margin },
     didDrawCell: (data) => {
-      // Add colored status indicator
+      // Add colored status indicator and progress bar
       if (data.section === "body" && data.column.index === 0) {
         const rowIndex = data.row.index;
         const statusColor = tableData[rowIndex]?.statusColor || colors.textMuted;
         
-        // Draw a small colored dot before status text
+        // Draw a small colored dot
         pdf.setFillColor(statusColor[0], statusColor[1], statusColor[2]);
-        pdf.circle(data.cell.x + data.cell.width - 5, data.cell.y + data.cell.height / 2, 2, "F");
+        pdf.circle(data.cell.x + data.cell.width - 6, data.cell.y + data.cell.height / 2, 2.5, "F");
+      }
+      
+      // Add mini progress bar in percentage column
+      if (data.section === "body" && data.column.index === 1) {
+        const rowIndex = data.row.index;
+        const percentage = tableData[rowIndex]?.percentage || 0;
+        const barColor = tableData[rowIndex]?.statusColor || colors.textMuted;
+        
+        const barX = data.cell.x + 3;
+        const barY = data.cell.y + data.cell.height - 5;
+        const barW = data.cell.width - 6;
+        const barH = 2;
+        
+        // Background
+        pdf.setFillColor(colors.border[0], colors.border[1], colors.border[2]);
+        pdf.roundedRect(barX, barY, barW, barH, 1, 1, "F");
+        
+        // Fill
+        const fillW = (barW * percentage) / 100;
+        pdf.setFillColor(barColor[0], barColor[1], barColor[2]);
+        pdf.roundedRect(barX, barY, fillW, barH, 1, 1, "F");
       }
     },
   };
@@ -522,113 +640,146 @@ export async function exportResultsToPDF(
   }
 
   const finalY = pdf.lastAutoTable?.finalY;
-  yPos = (typeof finalY === "number" ? finalY : yPos) + 18;
+  yPos = (typeof finalY === "number" ? finalY : yPos) + 20;
 
-  // ===================== MATURITY LEVELS LEGEND =====================
-  checkPageBreak(25);
-  
-  const legendY = yPos;
-  const legendItemWidth = 50;
-  const legendStartX = pageWidth / 2 + (legendItemWidth * 1.5);
-  
-  pdf.setFontSize(9);
-  
-  // Legend items
-  const legendItems = [
-    { label: "مثالي (75-100%)", color: colors.success },
-    { label: "ناشئ (50-74%)", color: colors.warning },
-    { label: "أساسي (0-49%)", color: colors.danger },
+  // Maturity levels legend below table
+  const tableLegendY = yPos;
+  const tableLegendItems = [
+    { label: "مثالي", range: "(75-100%)", color: colors.success },
+    { label: "ناشئ", range: "(50-74%)", color: colors.warning },
+    { label: "أساسي", range: "(0-49%)", color: colors.danger },
   ];
   
-  legendItems.forEach((item, index) => {
-    const x = legendStartX - (index * legendItemWidth);
-    
-    // Color dot
-    pdf.setFillColor(item.color[0], item.color[1], item.color[2]);
-    pdf.circle(x, legendY, 2.5, "F");
-    
-    // Label
-    pdf.setFont(arabicFont, "normal");
-    pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-    pdf.text(renderText(item.label), x - 5, legendY + 1, { align: "right" });
-  });
+  pdf.setFont(arabicFont, "normal");
+  pdf.setFontSize(9);
   
-  yPos += 15;
+  const tableLegendStartX = pageWidth - margin - 5;
+  tableLegendItems.forEach((item, index) => {
+    const x = tableLegendStartX - (index * 60);
+    
+    pdf.setFillColor(item.color[0], item.color[1], item.color[2]);
+    pdf.roundedRect(x - 18, tableLegendY - 4, 20, 10, 5, 5, "F");
+    
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(8);
+    pdf.text(renderText(item.label), x - 8, tableLegendY + 1.5, { align: "center" });
+    
+    pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+    pdf.text(renderText(item.range), x - 22, tableLegendY + 1.5, { align: "right" });
+  });
 
-  // ===================== INSIGHTS SECTIONS =====================
-  const renderSection = (
+  // ===================== PAGE 4: RECOMMENDATIONS & ROADMAP =====================
+  pdf.addPage();
+  yPos = safeMargin;
+
+  // Page header
+  pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+  pdf.rect(0, 0, pageWidth, 20, "F");
+  
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFont(arabicFont, "normal");
+  pdf.setFontSize(12);
+  pdf.text(renderText("التوصيات وخارطة الطريق"), pageWidth / 2, 13, { align: "center" });
+
+  yPos = 35;
+
+  // Render insights section as cards
+  const renderInsightCard = (
     title: string,
     items: string[],
     accentColor: number[],
-    maxItems: number = 5
+    iconSymbol: string,
+    maxItems: number = 5,
+    priorityBased: boolean = false
   ) => {
     if (items.length === 0) return;
 
-    checkPageBreak(45);
+    checkPageBreak(50);
 
     // Section header with accent bar
     pdf.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
-    pdf.rect(pageWidth - margin - 3, yPos - 2, 3, 14, "F");
+    pdf.rect(pageWidth - margin - 3, yPos - 2, 3, 16, "F");
     
     pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(14);
     pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-    pdf.text(renderText(title), pageWidth - margin - 8, yPos + 8, { align: "right" });
-    
-    yPos += 16;
+    pdf.text(renderText(title), pageWidth - margin - 8, yPos + 10, { align: "right" });
 
-    pdf.setFontSize(11);
+    // Priority note for recommendations
+    if (priorityBased) {
+      pdf.setFontSize(9);
+      pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+      pdf.text(renderText("(مرتبة حسب الأولوية)"), pageWidth - margin - 100, yPos + 10, { align: "right" });
+    }
+
+    yPos += 20;
 
     items.slice(0, maxItems).forEach((item, index) => {
-      checkPageBreak(18);
+      checkPageBreak(25);
 
-      const text = renderText(item);
-      const maxWidth = pageWidth - margin * 2 - 20;
-      const lines = pdf.splitTextToSize(text, maxWidth);
+      // Card background
+      const cardHeight = 18;
+      pdf.setFillColor(colors.bgLight[0], colors.bgLight[1], colors.bgLight[2]);
+      pdf.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
+      pdf.setLineWidth(0.3);
+      pdf.roundedRect(margin, yPos, pageWidth - margin * 2, cardHeight, 4, 4, "FD");
       
-      // Numbered circle
+      // Left accent
       pdf.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
-      pdf.circle(pageWidth - margin - 5, yPos + 1, 4, "F");
+      pdf.roundedRect(pageWidth - margin - 3, yPos + 3, 2, cardHeight - 6, 1, 1, "F");
+
+      // Number badge
+      pdf.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
+      pdf.circle(pageWidth - margin - 12, yPos + cardHeight / 2, 5, "F");
       
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(9);
       pdf.setTextColor(255, 255, 255);
-      pdf.text(`${index + 1}`, pageWidth - margin - 5, yPos + 2.5, { align: "center" });
+      pdf.text(`${index + 1}`, pageWidth - margin - 12, yPos + cardHeight / 2 + 1.5, { align: "center" });
 
-      // Content
-      pdf.setFont(arabicFont, "normal");
-      pdf.setFontSize(11);
-      pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+      // Content text
+      const text = renderText(item);
+      const maxWidth = pageWidth - margin * 2 - 30;
+      const lines = pdf.splitTextToSize(text, maxWidth);
       
-      lines.forEach((line: string, lineIndex: number) => {
-        if (lineIndex === 0) {
-          pdf.text(line, pageWidth - margin - 12, yPos + 2, { align: "right" });
-        } else {
-          yPos += 6;
-          checkPageBreak(10);
-          pdf.text(line, pageWidth - margin - 12, yPos + 2, { align: "right" });
-        }
-      });
+      pdf.setFont(arabicFont, "normal");
+      pdf.setFontSize(10);
+      pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+      pdf.text(lines[0], pageWidth - margin - 22, yPos + cardHeight / 2 + 2, { align: "right" });
 
-      yPos += 10;
+      yPos += cardHeight + 5;
     });
 
-    yPos += 8;
+    yPos += 10;
   };
 
-  // Strengths
-  renderSection("نقاط القوة", strengths, colors.success);
+  // Strengths section
+  renderInsightCard("نقاط القوة", strengths, colors.success, "✓");
 
-  // Opportunities
-  renderSection("فرص التحسين", opportunities, colors.warning);
+  // Opportunities section (sorted by priority - lowest scores first)
+  const prioritizedOpportunities = sortedByPriority
+    .filter(ds => ds.percentage < 75)
+    .map(ds => {
+      const name = ds.dimension.name_ar;
+      const percentage = ds.percentage;
+      if (percentage < 50) {
+        return `بناء أساسيات "${name}" (${Math.round(percentage)}%)`;
+      }
+      return `تطوير "${name}" من ${Math.round(percentage)}% إلى مستوى أعلى`;
+    });
+  
+  renderInsightCard("فرص التحسين", prioritizedOpportunities.length > 0 ? prioritizedOpportunities : opportunities, colors.warning, "!", 5, true);
 
-  // Recommendations
-  renderSection("التوصيات العملية", recommendations, colors.primary);
+  // Recommendations section (sorted by priority)
+  renderInsightCard("التوصيات العملية", recommendations, colors.primary, "→", 6, true);
 
-  // ===================== FOOTER =====================
+  // ===================== FOOTER ON ALL PAGES =====================
   const pageCount = pdf.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     pdf.setPage(i);
+
+    // Skip footer on cover page
+    if (i === 1) continue;
 
     // Footer background strip
     pdf.setFillColor(colors.bgLight[0], colors.bgLight[1], colors.bgLight[2]);
@@ -649,16 +800,24 @@ export async function exportResultsToPDF(
 
     // Page number badge
     pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-    pdf.roundedRect(margin, pageHeight - 14, 20, 10, 2, 2, "F");
+    pdf.roundedRect(margin, pageHeight - 14, 24, 10, 2, 2, "F");
     
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(8);
     pdf.setTextColor(255, 255, 255);
-    pdf.text(`${i} / ${pageCount}`, margin + 10, pageHeight - 7.5, { align: "center" });
+    pdf.text(`${i} / ${pageCount}`, margin + 12, pageHeight - 7.5, { align: "center" });
+
+    // Organization name in footer (if available)
+    if (organization) {
+      pdf.setFont(arabicFont, "normal");
+      pdf.setFontSize(8);
+      pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+      pdf.text(renderText(organization.name), pageWidth - margin, pageHeight - 8, { align: "right" });
+    }
   }
 
   // ===================== DOWNLOAD =====================
-  const fileName = `تقرير-نُشارك-${new Date().toISOString().slice(0, 10)}.pdf`;
+  const fileName = `تقرير-نُشارك-${organization?.name || "التقييم"}-${new Date().toISOString().slice(0, 10)}.pdf`;
 
   if (typeof window !== "undefined" && typeof document !== "undefined") {
     const blob = pdf.output("blob") as Blob;
