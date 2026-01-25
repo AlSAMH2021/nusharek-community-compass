@@ -69,7 +69,7 @@ export async function exportResultsToPDF(
   strengths: string[],
   opportunities: string[],
   recommendations: string[],
-  organization?: Organization | null
+  organization?: Organization | null,
 ) {
   const pdf = new jsPDF({
     orientation: "portrait",
@@ -129,7 +129,7 @@ export async function exportResultsToPDF(
     y: number,
     fontSize: number = 12,
     align: "right" | "center" | "left" = "right",
-    color: number[] = colors.text
+    color: number[] = colors.text,
   ): number => {
     pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(fontSize);
@@ -159,13 +159,13 @@ export async function exportResultsToPDF(
   const drawPortalPattern = (centerX: number, centerY: number, size: number, opacity: number = 0.15) => {
     pdf.setDrawColor(255, 255, 255);
     pdf.setLineWidth(0.3);
-    
+
     // Draw concentric arcs
     for (let i = 1; i <= 5; i++) {
       const radius = size * (i / 5);
       pdf.circle(centerX, centerY, radius, "S");
     }
-    
+
     // Draw radial lines
     for (let angle = 0; angle < 360; angle += 30) {
       const rad = (angle * Math.PI) / 180;
@@ -179,30 +179,30 @@ export async function exportResultsToPDF(
   const drawCornerDecoration = (x: number, y: number, size: number, flip: boolean = false) => {
     pdf.setDrawColor(255, 255, 255);
     pdf.setLineWidth(0.5);
-    
+
     const dir = flip ? -1 : 1;
     for (let i = 0; i < 3; i++) {
-      pdf.line(x, y + (i * 4) * dir, x + size - (i * 8), y + (i * 4) * dir);
+      pdf.line(x, y + i * 4 * dir, x + size - i * 8, y + i * 4 * dir);
     }
   };
 
   // Draw gauge arc for score visualization
   const drawGaugeArc = (
-    centerX: number, 
-    centerY: number, 
-    radius: number, 
+    centerX: number,
+    centerY: number,
+    radius: number,
     percentage: number,
     bgColor: number[],
-    fgColor: number[]
+    fgColor: number[],
   ) => {
     const startAngle = Math.PI;
     const endAngle = 0;
     const arcAngle = startAngle + (endAngle - startAngle) * (percentage / 100);
-    
+
     // Background arc
     pdf.setDrawColor(bgColor[0], bgColor[1], bgColor[2]);
     pdf.setLineWidth(6);
-    
+
     // Draw background arc segments
     for (let a = startAngle; a <= endAngle + 0.01; a += 0.1) {
       const x1 = centerX + Math.cos(a) * radius;
@@ -211,7 +211,7 @@ export async function exportResultsToPDF(
       const y2 = centerY + Math.sin(a + 0.1) * radius;
       pdf.line(x1, y1, x2, y2);
     }
-    
+
     // Foreground arc (score)
     pdf.setDrawColor(fgColor[0], fgColor[1], fgColor[2]);
     for (let a = startAngle; a <= arcAngle; a += 0.05) {
@@ -228,7 +228,7 @@ export async function exportResultsToPDF(
     centerX: number,
     centerY: number,
     radius: number,
-    data: { label: string; value: number; shortLabel: string }[]
+    data: { label: string; value: number; shortLabel: string }[],
   ) => {
     const numPoints = data.length;
     const angleStep = (2 * Math.PI) / numPoints;
@@ -237,7 +237,7 @@ export async function exportResultsToPDF(
     // Draw grid circles (background)
     pdf.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
     pdf.setLineWidth(0.3);
-    
+
     for (let level = 1; level <= 4; level++) {
       const levelRadius = (radius * level) / 4;
       pdf.circle(centerX, centerY, levelRadius, "S");
@@ -246,7 +246,7 @@ export async function exportResultsToPDF(
     // Draw axis lines
     pdf.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
     pdf.setLineWidth(0.3);
-    
+
     for (let i = 0; i < numPoints; i++) {
       const angle = startAngle + i * angleStep;
       const x = centerX + Math.cos(angle) * radius;
@@ -256,7 +256,7 @@ export async function exportResultsToPDF(
 
     // Draw data polygon (filled)
     const dataPoints: { x: number; y: number }[] = [];
-    
+
     for (let i = 0; i < numPoints; i++) {
       const angle = startAngle + i * angleStep;
       const value = data[i].value / 100; // Normalize to 0-1
@@ -273,17 +273,17 @@ export async function exportResultsToPDF(
       pdf.setFillColor(
         Math.min(255, colors.primaryLight[0] + 40),
         Math.min(255, colors.primaryLight[1] + 40),
-        Math.min(255, colors.primaryLight[2] + 40)
+        Math.min(255, colors.primaryLight[2] + 40),
       );
-      
+
       for (let i = 0; i < dataPoints.length; i++) {
         const current = dataPoints[i];
         const next = dataPoints[(i + 1) % dataPoints.length];
-        
+
         // Draw triangle
         pdf.triangle(centerX, centerY, current.x, current.y, next.x, next.y, "F");
       }
-      
+
       // Draw outline
       pdf.setDrawColor(colors.primary[0], colors.primary[1], colors.primary[2]);
       pdf.setLineWidth(2);
@@ -298,7 +298,7 @@ export async function exportResultsToPDF(
       dataPoints.forEach((point) => {
         pdf.circle(point.x, point.y, 2.5, "F");
       });
-      
+
       // Draw white center point
       pdf.setFillColor(255, 255, 255);
       pdf.circle(centerX, centerY, 3, "F");
@@ -310,18 +310,18 @@ export async function exportResultsToPDF(
     pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(8);
     pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-    
+
     for (let i = 0; i < numPoints; i++) {
       const angle = startAngle + i * angleStep;
       const labelRadius = radius + 12;
       const x = centerX + Math.cos(angle) * labelRadius;
       const y = centerY + Math.sin(angle) * labelRadius;
-      
+
       // Adjust alignment based on position
       let align: "center" | "right" | "left" = "center";
       if (Math.cos(angle) < -0.3) align = "right";
       else if (Math.cos(angle) > 0.3) align = "left";
-      
+
       pdf.text(renderText(data[i].shortLabel), x, y + 2, { align });
     }
 
@@ -329,7 +329,7 @@ export async function exportResultsToPDF(
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(7);
     pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-    
+
     for (let level = 1; level <= 4; level++) {
       const levelRadius = (radius * level) / 4;
       const percentage = level * 25;
@@ -352,11 +352,12 @@ export async function exportResultsToPDF(
 
   // Format date in Arabic
   const formatDate = (dateStr: string | null): string => {
-    if (!dateStr) return new Date().toLocaleDateString("ar-SA", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    if (!dateStr)
+      return new Date().toLocaleDateString("ar-SA", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
     return new Date(dateStr).toLocaleDateString("ar-SA", {
       year: "numeric",
       month: "long",
@@ -376,58 +377,58 @@ export async function exportResultsToPDF(
   const drawPortalShape = (x: number, y: number, size: number, rotation: number, color: number[]) => {
     pdf.setDrawColor(color[0], color[1], color[2]);
     pdf.setLineWidth(1.5);
-    
+
     // Save the current state
-    const cos = Math.cos(rotation * Math.PI / 180);
-    const sin = Math.sin(rotation * Math.PI / 180);
-    
+    const cos = Math.cos((rotation * Math.PI) / 180);
+    const sin = Math.sin((rotation * Math.PI) / 180);
+
     // Helper to rotate a point around center
     const rotatePoint = (px: number, py: number) => {
       const dx = px - x;
       const dy = py - y;
       return {
         x: x + dx * cos - dy * sin,
-        y: y + dx * sin + dy * cos
+        y: y + dx * sin + dy * cos,
       };
     };
-    
+
     // Draw the four curved diamond shapes (portal pattern)
     // Shape 1 - Top right quadrant
     const s = size / 4;
-    
+
     // Outer shape paths (simplified curved diamonds)
     // First diamond (top-left of pattern)
     const d1Points = [
       { x: x - s, y: y - s * 2 },
       { x: x + s, y: y - s },
       { x: x, y: y + s },
-      { x: x - s * 2, y: y }
+      { x: x - s * 2, y: y },
     ];
-    
+
     // Second diamond (top-right)
     const d2Points = [
       { x: x + s, y: y - s * 2 },
       { x: x + s * 2, y: y },
       { x: x + s, y: y + s },
-      { x: x, y: y - s }
+      { x: x, y: y - s },
     ];
-    
+
     // Third diamond (bottom-left)
     const d3Points = [
       { x: x - s * 2, y: y },
       { x: x - s, y: y + s },
       { x: x, y: y + s * 2 },
-      { x: x - s, y: y + s }
+      { x: x - s, y: y + s },
     ];
-    
+
     // Fourth diamond (bottom-right)
     const d4Points = [
       { x: x, y: y + s },
       { x: x + s, y: y + s * 2 },
       { x: x + s * 2, y: y + s },
-      { x: x + s, y: y }
+      { x: x + s, y: y },
     ];
-    
+
     // Draw all four diamond shapes with rotation
     [d1Points, d2Points, d3Points, d4Points].forEach((points, index) => {
       // Use different shades for visual effect
@@ -436,9 +437,9 @@ export async function exportResultsToPDF(
       } else {
         pdf.setDrawColor(105, 41, 242); // Darker purple #6929f2
       }
-      
-      const rotatedPoints = points.map(p => rotatePoint(p.x, p.y));
-      
+
+      const rotatedPoints = points.map((p) => rotatePoint(p.x, p.y));
+
       // Draw diamond shape
       for (let i = 0; i < rotatedPoints.length; i++) {
         const start = rotatedPoints[i];
@@ -450,31 +451,31 @@ export async function exportResultsToPDF(
 
   // Draw portal pattern in top-left corner (rotated -15 degrees)
   drawPortalShape(-15, -15, 80, -15, colors.primaryLight);
-  
+
   // Draw portal pattern in bottom-right corner (rotated 165 degrees)
   drawPortalShape(pageWidth + 15, pageHeight + 15, 80, 165, colors.primaryLight);
 
   // Load and add Nusharek logo image
   try {
-    const logoResponse = await fetch('/src/assets/nusharek-logo.png');
+    const logoResponse = await fetch("/src/assets/nusharek-logo.png");
     const logoBlob = await logoResponse.blob();
     const logoBase64 = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onloadend = () => {
         const result = reader.result as string;
         // Extract base64 data after the data URL prefix
-        const base64Data = result.split(',')[1];
+        const base64Data = result.split(",")[1];
         resolve(base64Data);
       };
       reader.onerror = reject;
       reader.readAsDataURL(logoBlob);
     });
-    
+
     // Add logo image centered at top (smaller size)
     const logoWidth = 55;
     const logoHeight = 19; // Approximate height based on logo aspect ratio
     const logoX = (pageWidth - logoWidth) / 2;
-    pdf.addImage(logoBase64, 'PNG', logoX, 50, logoWidth, logoHeight);
+    pdf.addImage(logoBase64, "PNG", logoX, 50, logoWidth, logoHeight);
   } catch (logoError) {
     // Fallback to text if logo fails to load
     console.warn("Could not load logo image, falling back to text:", logoError);
@@ -483,7 +484,7 @@ export async function exportResultsToPDF(
     pdf.setFontSize(32);
     pdf.text(renderText("نُشارك"), pageWidth / 2, 60, { align: "center" });
   }
-  
+
   // Small tagline below logo
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(12);
@@ -502,7 +503,7 @@ export async function exportResultsToPDF(
     pdf.setFontSize(18);
     pdf.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
     pdf.text(renderText(organization.name), pageWidth / 2, pageHeight / 2 + 15, { align: "center" });
-    
+
     // Organization type
     if (organization.type && orgTypeLabels[organization.type]) {
       pdf.setFont(arabicFont, "normal");
@@ -531,7 +532,7 @@ export async function exportResultsToPDF(
   // Page header
   pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   pdf.rect(0, 0, pageWidth, 20, "F");
-  
+
   pdf.setTextColor(255, 255, 255);
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(12);
@@ -542,7 +543,7 @@ export async function exportResultsToPDF(
   // Executive Summary Title
   pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   pdf.rect(pageWidth - margin - 3, yPos - 2, 3, 16, "F");
-  
+
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(18);
   pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
@@ -554,10 +555,10 @@ export async function exportResultsToPDF(
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(11);
   pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-  const summaryIntro = organization 
+  const summaryIntro = organization
     ? `يقدم هذا التقرير نتائج تقييم النضج في المشاركة المجتمعية لـ "${organization.name}". يتضمن الملخص أبرز النتائج والتوصيات الاستراتيجية.`
     : "يقدم هذا التقرير نتائج تقييم النضج في المشاركة المجتمعية. يتضمن الملخص أبرز النتائج والتوصيات الاستراتيجية.";
-  
+
   const introLines = pdf.splitTextToSize(renderText(summaryIntro), pageWidth - margin * 2 - 10);
   introLines.forEach((line: string) => {
     pdf.text(line, pageWidth - margin - 5, yPos, { align: "right" });
@@ -575,13 +576,13 @@ export async function exportResultsToPDF(
   pdf.setDrawColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   pdf.setLineWidth(1.5);
   pdf.roundedRect(pageWidth - margin - metricBoxWidth, yPos, metricBoxWidth, metricBoxHeight, 6, 6, "FD");
-  
+
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(24);
   pdf.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   const overallScore = Math.round(assessment.overall_score || 0);
   pdf.text(`${overallScore}%`, pageWidth - margin - metricBoxWidth / 2, yPos + 28, { align: "center" });
-  
+
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(10);
   pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
@@ -590,16 +591,18 @@ export async function exportResultsToPDF(
   // Metric 2: Maturity Level
   const maturityForSummary = assessment.maturity_level ? maturityLabels[assessment.maturity_level] : null;
   const maturityColorSummary = maturityForSummary?.color || colors.textMuted;
-  
+
   pdf.setFillColor(colors.bgLight[0], colors.bgLight[1], colors.bgLight[2]);
   pdf.setDrawColor(maturityColorSummary[0], maturityColorSummary[1], maturityColorSummary[2]);
   pdf.roundedRect(pageWidth - margin - metricBoxWidth * 2 - 8, yPos, metricBoxWidth, metricBoxHeight, 6, 6, "FD");
-  
+
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(20);
   pdf.setTextColor(maturityColorSummary[0], maturityColorSummary[1], maturityColorSummary[2]);
-  pdf.text(renderText(maturityForSummary?.ar || "—"), pageWidth - margin - metricBoxWidth * 1.5 - 8, yPos + 28, { align: "center" });
-  
+  pdf.text(renderText(maturityForSummary?.ar || "—"), pageWidth - margin - metricBoxWidth * 1.5 - 8, yPos + 28, {
+    align: "center",
+  });
+
   pdf.setFontSize(10);
   pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
   pdf.text(renderText("مستوى النضج"), pageWidth - margin - metricBoxWidth * 1.5 - 8, yPos + 42, { align: "center" });
@@ -608,12 +611,12 @@ export async function exportResultsToPDF(
   pdf.setFillColor(colors.bgLight[0], colors.bgLight[1], colors.bgLight[2]);
   pdf.setDrawColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
   pdf.roundedRect(margin, yPos, metricBoxWidth, metricBoxHeight, 6, 6, "FD");
-  
+
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(24);
   pdf.setTextColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
   pdf.text(`${dimensionScores.length}`, margin + metricBoxWidth / 2, yPos + 28, { align: "center" });
-  
+
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(10);
   pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
@@ -624,7 +627,7 @@ export async function exportResultsToPDF(
   // Top 3 Results Section
   pdf.setFillColor(colors.success[0], colors.success[1], colors.success[2]);
   pdf.rect(pageWidth - margin - 3, yPos - 2, 3, 16, "F");
-  
+
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(14);
   pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
@@ -633,42 +636,40 @@ export async function exportResultsToPDF(
   yPos += 20;
 
   // Get top 3 performing dimensions
-  const top3Dimensions = [...dimensionScores]
-    .sort((a, b) => b.percentage - a.percentage)
-    .slice(0, 3);
+  const top3Dimensions = [...dimensionScores].sort((a, b) => b.percentage - a.percentage).slice(0, 3);
 
   top3Dimensions.forEach((ds, index) => {
     const cardY = yPos;
     const cardHeight = 22;
-    
+
     // Card background
     pdf.setFillColor(colors.bgLight[0], colors.bgLight[1], colors.bgLight[2]);
     pdf.roundedRect(margin, cardY, pageWidth - margin * 2, cardHeight, 4, 4, "F");
-    
+
     // Left accent based on score
     const accentColor = getMaturityColor(ds.percentage);
     pdf.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
     pdf.roundedRect(pageWidth - margin - 3, cardY + 4, 2, cardHeight - 8, 1, 1, "F");
-    
+
     // Number badge
     pdf.setFillColor(colors.success[0], colors.success[1], colors.success[2]);
     pdf.circle(pageWidth - margin - 14, cardY + cardHeight / 2, 6, "F");
-    
+
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(10);
     pdf.setTextColor(255, 255, 255);
     pdf.text(`${index + 1}`, pageWidth - margin - 14, cardY + cardHeight / 2 + 2, { align: "center" });
-    
+
     // Dimension name
     pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(11);
     pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
     pdf.text(renderText(ds.dimension.name_ar), pageWidth - margin - 25, cardY + cardHeight / 2 + 2, { align: "right" });
-    
+
     // Percentage badge
     pdf.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
     pdf.roundedRect(margin + 5, cardY + 5, 35, cardHeight - 10, 6, 6, "F");
-    
+
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(11);
     pdf.setTextColor(255, 255, 255);
@@ -682,7 +683,7 @@ export async function exportResultsToPDF(
   // Top 3 Recommendations Section
   pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   pdf.rect(pageWidth - margin - 3, yPos - 2, 3, 16, "F");
-  
+
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(14);
   pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
@@ -691,46 +692,44 @@ export async function exportResultsToPDF(
   yPos += 20;
 
   // Get top 3 priority recommendations (from lowest scoring dimensions)
-  const priorityRecommendations = sortedByPriority
-    .slice(0, 3)
-    .map((ds) => {
-      const name = ds.dimension.name_ar;
-      const percentage = ds.percentage;
-      if (percentage < 50) {
-        return `التركيز على بناء الأسس في "${name}" - الدرجة الحالية ${Math.round(percentage)}%`;
-      } else if (percentage < 75) {
-        return `تطوير ممارسات "${name}" للوصول للمستوى المثالي - الدرجة الحالية ${Math.round(percentage)}%`;
-      } else {
-        return `الحفاظ على التميز في "${name}" ومشاركة الممارسات الناجحة`;
-      }
-    });
+  const priorityRecommendations = sortedByPriority.slice(0, 3).map((ds) => {
+    const name = ds.dimension.name_ar;
+    const percentage = ds.percentage;
+    if (percentage < 50) {
+      return `التركيز على بناء الأسس في "${name}" - الدرجة الحالية ${Math.round(percentage)}%`;
+    } else if (percentage < 75) {
+      return `تطوير ممارسات "${name}" للوصول للمستوى المثالي - الدرجة الحالية ${Math.round(percentage)}%`;
+    } else {
+      return `الحفاظ على التميز في "${name}" ومشاركة الممارسات الناجحة`;
+    }
+  });
 
   priorityRecommendations.forEach((rec, index) => {
     const cardY = yPos;
     const cardHeight = 26;
-    
+
     // Card background
     pdf.setFillColor(colors.bgLight[0], colors.bgLight[1], colors.bgLight[2]);
     pdf.roundedRect(margin, cardY, pageWidth - margin * 2, cardHeight, 4, 4, "F");
-    
+
     // Left accent
     pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
     pdf.roundedRect(pageWidth - margin - 3, cardY + 4, 2, cardHeight - 8, 1, 1, "F");
-    
+
     // Number badge
     pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
     pdf.circle(pageWidth - margin - 14, cardY + cardHeight / 2, 6, "F");
-    
+
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(10);
     pdf.setTextColor(255, 255, 255);
     pdf.text(`${index + 1}`, pageWidth - margin - 14, cardY + cardHeight / 2 + 2, { align: "center" });
-    
+
     // Recommendation text
     const recText = renderText(rec);
     const maxWidth = pageWidth - margin * 2 - 35;
     const lines = pdf.splitTextToSize(recText, maxWidth);
-    
+
     pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(10);
     pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
@@ -746,7 +745,7 @@ export async function exportResultsToPDF(
   // Page header
   pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   pdf.rect(0, 0, pageWidth, 20, "F");
-  
+
   pdf.setTextColor(255, 255, 255);
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(12);
@@ -757,7 +756,7 @@ export async function exportResultsToPDF(
   // Section title
   pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   pdf.rect(pageWidth - margin - 3, yPos - 2, 3, 16, "F");
-  
+
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(18);
   pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
@@ -774,22 +773,22 @@ export async function exportResultsToPDF(
   pdf.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
   pdf.setLineWidth(0.5);
   pdf.roundedRect(pageWidth / 2 + 6, yPos, dashboardBoxWidth, dashboardBoxHeight, 6, 6, "FD");
-  
+
   // Score gauge visualization
   const scoreValue = Math.round(assessment.overall_score || 0);
   const gaugeX = pageWidth / 2 + 6 + dashboardBoxWidth / 2;
   const gaugeY = yPos + dashboardBoxHeight / 2 + 8;
   const gaugeRadius = 25;
-  
+
   // Draw gauge arc
   drawGaugeArc(gaugeX, gaugeY, gaugeRadius, scoreValue, colors.border, colors.primary);
-  
+
   // Score value in center
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(24);
   pdf.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   pdf.text(`${scoreValue}%`, gaugeX, gaugeY + 3, { align: "center" });
-  
+
   // Label
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(12);
@@ -799,24 +798,24 @@ export async function exportResultsToPDF(
   // Maturity Level Box (Left side)
   const maturity = assessment.maturity_level ? maturityLabels[assessment.maturity_level] : null;
   const maturityBgColor = maturity?.bgColor || colors.bgLight;
-  
+
   pdf.setFillColor(maturityBgColor[0], maturityBgColor[1], maturityBgColor[2]);
   pdf.roundedRect(margin, yPos, dashboardBoxWidth, dashboardBoxHeight, 6, 6, "F");
-  
+
   // Maturity label
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(12);
   pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
   pdf.text(renderText("مستوى النضج"), margin + dashboardBoxWidth / 2, yPos + 14, { align: "center" });
-  
+
   // Maturity badge
   if (maturity) {
     const badgeX = margin + dashboardBoxWidth / 2;
     const badgeY = yPos + dashboardBoxHeight / 2 + 5;
-    
+
     pdf.setFillColor(maturity.color[0], maturity.color[1], maturity.color[2]);
     pdf.roundedRect(badgeX - 28, badgeY - 12, 56, 22, 11, 11, "F");
-    
+
     pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(16);
     pdf.setTextColor(255, 255, 255);
@@ -829,7 +828,7 @@ export async function exportResultsToPDF(
   // Section title
   pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   pdf.rect(pageWidth - margin - 3, yPos - 2, 3, 16, "F");
-  
+
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(16);
   pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
@@ -848,7 +847,7 @@ export async function exportResultsToPDF(
   const radarCenterX = pageWidth / 2;
   const radarCenterY = yPos + 55;
   const radarRadius = 45;
-  
+
   drawRadarChart(radarCenterX, radarCenterY, radarRadius, radarData);
 
   yPos = radarCenterY + radarRadius + 25;
@@ -857,19 +856,19 @@ export async function exportResultsToPDF(
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(8);
   pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-  
+
   const legendColWidth = (pageWidth - margin * 2) / 3;
   dimensionScores.forEach((ds, index) => {
     const col = index % 3;
     const row = Math.floor(index / 3);
-    const x = pageWidth - margin - (col * legendColWidth) - 5;
-    const y = yPos + (row * 10);
-    
+    const x = pageWidth - margin - col * legendColWidth - 5;
+    const y = yPos + row * 10;
+
     // Colored dot
     const dotColor = getMaturityColor(ds.percentage);
     pdf.setFillColor(dotColor[0], dotColor[1], dotColor[2]);
     pdf.circle(x, y - 1, 2, "F");
-    
+
     // Label
     pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(7);
@@ -887,14 +886,14 @@ export async function exportResultsToPDF(
     { label: "ناشئ (50-74%)", color: colors.warning },
     { label: "أساسي (0-49%)", color: colors.danger },
   ];
-  
+
   const legendStartX = pageWidth - margin - 10;
   legendItems.forEach((item, index) => {
-    const x = legendStartX - (index * 55);
-    
+    const x = legendStartX - index * 55;
+
     pdf.setFillColor(item.color[0], item.color[1], item.color[2]);
     pdf.circle(x, yPos, 2.5, "F");
-    
+
     pdf.setFont(arabicFont, "normal");
     pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
     pdf.text(renderText(item.label), x - 5, yPos + 1, { align: "right" });
@@ -907,7 +906,7 @@ export async function exportResultsToPDF(
   // Page header
   pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   pdf.rect(0, 0, pageWidth, 20, "F");
-  
+
   pdf.setTextColor(255, 255, 255);
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(12);
@@ -918,7 +917,7 @@ export async function exportResultsToPDF(
   // Section title
   pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   pdf.rect(pageWidth - margin - 3, yPos - 2, 3, 16, "F");
-  
+
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(16);
   pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
@@ -930,7 +929,7 @@ export async function exportResultsToPDF(
   const tableData = dimensionScores.map((ds) => {
     const status = getMaturityLabel(ds.percentage);
     const statusColor = getMaturityColor(ds.percentage);
-    
+
     return {
       data: [
         renderText(status),
@@ -946,16 +945,8 @@ export async function exportResultsToPDF(
 
   const tableOptions: UserOptions = {
     startY: yPos,
-    head: [
-      [
-        renderText("الحالة"),
-        renderText("النسبة"),
-        renderText("الدرجة"),
-        renderText("المعيار"),
-        "#",
-      ],
-    ],
-    body: tableData.map(row => row.data),
+    head: [[renderText("الحالة"), renderText("النسبة"), renderText("الدرجة"), renderText("المعيار"), "#"]],
+    body: tableData.map((row) => row.data),
     theme: "plain",
     styles: {
       font: arabicFont,
@@ -973,7 +964,7 @@ export async function exportResultsToPDF(
       font: arabicFont,
       halign: "center",
       fontStyle: "normal",
-      cellPadding: 7,
+      cellPadding: 9,
     },
     bodyStyles: {
       fontSize: 10,
@@ -996,27 +987,27 @@ export async function exportResultsToPDF(
       if (data.section === "body" && data.column.index === 0) {
         const rowIndex = data.row.index;
         const statusColor = tableData[rowIndex]?.statusColor || colors.textMuted;
-        
+
         // Draw a small colored dot
         pdf.setFillColor(statusColor[0], statusColor[1], statusColor[2]);
         pdf.circle(data.cell.x + data.cell.width - 6, data.cell.y + data.cell.height / 2, 2.5, "F");
       }
-      
+
       // Add mini progress bar in percentage column
       if (data.section === "body" && data.column.index === 1) {
         const rowIndex = data.row.index;
         const percentage = tableData[rowIndex]?.percentage || 0;
         const barColor = tableData[rowIndex]?.statusColor || colors.textMuted;
-        
+
         const barX = data.cell.x + 3;
         const barY = data.cell.y + data.cell.height - 5;
         const barW = data.cell.width - 6;
         const barH = 2;
-        
+
         // Background
         pdf.setFillColor(colors.border[0], colors.border[1], colors.border[2]);
         pdf.roundedRect(barX, barY, barW, barH, 1, 1, "F");
-        
+
         // Fill
         const fillW = (barW * percentage) / 100;
         pdf.setFillColor(barColor[0], barColor[1], barColor[2]);
@@ -1041,21 +1032,21 @@ export async function exportResultsToPDF(
     { label: "ناشئ", range: "(50-74%)", color: colors.warning },
     { label: "أساسي", range: "(0-49%)", color: colors.danger },
   ];
-  
+
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(9);
-  
+
   const tableLegendStartX = pageWidth - margin - 5;
   tableLegendItems.forEach((item, index) => {
-    const x = tableLegendStartX - (index * 60);
-    
+    const x = tableLegendStartX - index * 60;
+
     pdf.setFillColor(item.color[0], item.color[1], item.color[2]);
     pdf.roundedRect(x - 18, tableLegendY - 4, 20, 10, 5, 5, "F");
-    
+
     pdf.setTextColor(255, 255, 255);
     pdf.setFontSize(8);
     pdf.text(renderText(item.label), x - 8, tableLegendY + 1.5, { align: "center" });
-    
+
     pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
     pdf.text(renderText(item.range), x - 22, tableLegendY + 1.5, { align: "right" });
   });
@@ -1067,7 +1058,7 @@ export async function exportResultsToPDF(
   // Page header
   pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   pdf.rect(0, 0, pageWidth, 20, "F");
-  
+
   pdf.setTextColor(255, 255, 255);
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(12);
@@ -1082,7 +1073,7 @@ export async function exportResultsToPDF(
     accentColor: number[],
     iconSymbol: string,
     maxItems: number = 5,
-    priorityBased: boolean = false
+    priorityBased: boolean = false,
   ) => {
     if (items.length === 0) return;
 
@@ -1091,7 +1082,7 @@ export async function exportResultsToPDF(
     // Section header with accent bar
     pdf.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
     pdf.rect(pageWidth - margin - 3, yPos - 2, 3, 16, "F");
-    
+
     pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(14);
     pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
@@ -1115,7 +1106,7 @@ export async function exportResultsToPDF(
       pdf.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
       pdf.setLineWidth(0.3);
       pdf.roundedRect(margin, yPos, pageWidth - margin * 2, cardHeight, 4, 4, "FD");
-      
+
       // Left accent
       pdf.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
       pdf.roundedRect(pageWidth - margin - 3, yPos + 3, 2, cardHeight - 6, 1, 1, "F");
@@ -1123,7 +1114,7 @@ export async function exportResultsToPDF(
       // Number badge
       pdf.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
       pdf.circle(pageWidth - margin - 12, yPos + cardHeight / 2, 5, "F");
-      
+
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(9);
       pdf.setTextColor(255, 255, 255);
@@ -1133,7 +1124,7 @@ export async function exportResultsToPDF(
       const text = renderText(item);
       const maxWidth = pageWidth - margin * 2 - 30;
       const lines = pdf.splitTextToSize(text, maxWidth);
-      
+
       pdf.setFont(arabicFont, "normal");
       pdf.setFontSize(10);
       pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
@@ -1150,8 +1141,8 @@ export async function exportResultsToPDF(
 
   // Opportunities section (sorted by priority - lowest scores first)
   const prioritizedOpportunities = sortedByPriority
-    .filter(ds => ds.percentage < 75)
-    .map(ds => {
+    .filter((ds) => ds.percentage < 75)
+    .map((ds) => {
       const name = ds.dimension.name_ar;
       const percentage = ds.percentage;
       if (percentage < 50) {
@@ -1159,8 +1150,15 @@ export async function exportResultsToPDF(
       }
       return `تطوير "${name}" من ${Math.round(percentage)}% إلى مستوى أعلى`;
     });
-  
-  renderInsightCard("فرص التحسين", prioritizedOpportunities.length > 0 ? prioritizedOpportunities : opportunities, colors.warning, "!", 5, true);
+
+  renderInsightCard(
+    "فرص التحسين",
+    prioritizedOpportunities.length > 0 ? prioritizedOpportunities : opportunities,
+    colors.warning,
+    "!",
+    5,
+    true,
+  );
 
   // Recommendations section (sorted by priority)
   renderInsightCard("التوصيات العملية", recommendations, colors.primary, "→", 6, true);
@@ -1176,7 +1174,7 @@ export async function exportResultsToPDF(
     // Footer background strip
     pdf.setFillColor(colors.bgLight[0], colors.bgLight[1], colors.bgLight[2]);
     pdf.rect(0, pageHeight - 18, pageWidth, 18, "F");
-    
+
     // Top border line
     pdf.setDrawColor(colors.primary[0], colors.primary[1], colors.primary[2]);
     pdf.setLineWidth(0.8);
@@ -1193,7 +1191,7 @@ export async function exportResultsToPDF(
     // Page number badge
     pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
     pdf.roundedRect(margin, pageHeight - 14, 24, 10, 2, 2, "F");
-    
+
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(8);
     pdf.setTextColor(255, 255, 255);
