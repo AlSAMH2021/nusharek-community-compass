@@ -190,18 +190,45 @@ export async function exportResultsToPDF(
   };
 
   // Centralized jsPDF text helper to enable built-in RTL handling
+  // NOTE: We also monkey-patch pdf.text so that libraries like jspdf-autotable
+  // (which call pdf.text internally) get consistent RTL options.
+  const basePdfText = pdf.text.bind(pdf);
+  const rtlTextOptions = {
+    isInputRtl: true,
+    isOutputRtl: true,
+    isSymmetricSwapping: true,
+  } as const;
+
+  // Enable global RTL mode if available (safe feature-detect)
+  if (typeof (pdf as any).setR2L === "function") {
+    (pdf as any).setR2L(true);
+  }
+
+  // Patch pdf.text for any internal usage (e.g., autoTable)
+  (pdf as any).text = (...args: any[]) => {
+    const [text, x, y, options, ...rest] = args;
+
+    // If no options were provided, inject RTL options as the 4th argument.
+    if (options === undefined) {
+      return basePdfText(text, x, y, { ...rtlTextOptions } as any, ...rest);
+    }
+
+    // If options is an object, merge RTL options.
+    if (options && typeof options === "object" && !Array.isArray(options)) {
+      return basePdfText(text, x, y, { ...options, ...rtlTextOptions } as any, ...rest);
+    }
+
+    // Otherwise (rare signatures), leave as-is.
+    return basePdfText(text, x, y, options, ...rest);
+  };
+
   const pdfText = (
     text: string | string[],
     x: number,
     y: number,
     options: Record<string, unknown> = {},
   ) => {
-    pdf.text(text as any, x, y, {
-      ...options,
-      isInputRtl: true,
-      isOutputRtl: true,
-      isSymmetricSwapping: true,
-    } as any);
+    basePdfText(text as any, x, y, { ...options, ...rtlTextOptions } as any);
   };
 
   const getMaturityColor = (percentage: number): ColorTuple => {
@@ -281,14 +308,14 @@ export async function exportResultsToPDF(
     pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(28);
     pdf.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-    pdf.text(renderText("نُشارك"), pageWidth / 2, 50, { align: "center" });
+    pdfText(renderText("نُشارك"), pageWidth / 2, 50, { align: "center" });
   }
 
   // الشعار الفرعي
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(11);
   pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-  pdf.text(renderText("منصة التقييم الذاتي للمشاركة المجتمعية"), pageWidth / 2, 62, { align: "center" });
+  pdfText(renderText("منصة التقييم الذاتي للمشاركة المجتمعية"), pageWidth / 2, 62, { align: "center" });
 
   // خط فاصل
   pdf.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
@@ -299,19 +326,19 @@ export async function exportResultsToPDF(
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(32);
   pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-  pdf.text(renderText("تقرير نتائج التقييم"), pageWidth / 2, 110, { align: "center" });
+  pdfText(renderText("تقرير نتائج التقييم"), pageWidth / 2, 110, { align: "center" });
 
   // اسم المنظمة
   if (organization) {
     pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(20);
     pdf.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-    pdf.text(renderText(organization.name), pageWidth / 2, 130, { align: "center" });
+    pdfText(renderText(organization.name), pageWidth / 2, 130, { align: "center" });
 
     if (organization.type && orgTypeLabels[organization.type]) {
       pdf.setFontSize(12);
       pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-      pdf.text(renderText(orgTypeLabels[organization.type]), pageWidth / 2, 142, { align: "center" });
+      pdfText(renderText(orgTypeLabels[organization.type]), pageWidth / 2, 142, { align: "center" });
     }
   }
 
@@ -330,12 +357,12 @@ export async function exportResultsToPDF(
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(36);
   pdf.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-  pdf.text(renderText(`${overallScore}٪`), pageWidth / 2, scoreBoxY + 32, { align: "center" });
+  pdfText(renderText(`${overallScore}٪`), pageWidth / 2, scoreBoxY + 32, { align: "center" });
 
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(10);
   pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-  pdf.text(renderText("الدرجة الإجمالية"), pageWidth / 2, scoreBoxY + 45, { align: "center" });
+  pdfText(renderText("الدرجة الإجمالية"), pageWidth / 2, scoreBoxY + 45, { align: "center" });
 
   // شارة مستوى النضج
   const maturity = assessment.maturity_level ? maturityLabels[assessment.maturity_level] : null;
@@ -347,18 +374,18 @@ export async function exportResultsToPDF(
     pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(14);
     pdf.setTextColor(255, 255, 255);
-    pdf.text(renderText(maturity.ar), pageWidth / 2, badgeY + 14, { align: "center" });
+    pdfText(renderText(maturity.ar), pageWidth / 2, badgeY + 14, { align: "center" });
   }
 
   // التاريخ
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(11);
   pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-  pdf.text(renderText(formatDate(assessment.completed_at)), pageWidth / 2, pageHeight - 30, { align: "center" });
+  pdfText(renderText(formatDate(assessment.completed_at)), pageWidth / 2, pageHeight - 30, { align: "center" });
 
   // حقوق النشر
   pdf.setFontSize(9);
-  pdf.text(renderText("جميع الحقوق محفوظة © منصة نُشارك"), pageWidth / 2, pageHeight - 20, { align: "center" });
+  pdfText(renderText("جميع الحقوق محفوظة © منصة نُشارك"), pageWidth / 2, pageHeight - 20, { align: "center" });
 
   // ===================== صفحة 2: ملخص تنفيذي =====================
   pdf.addPage();
@@ -391,11 +418,11 @@ export async function exportResultsToPDF(
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(24);
   pdf.setTextColor(255, 255, 255);
-  pdf.text(renderText(`${overallScore}٪`), pageWidth - margin - cardWidth / 2, yPos + 25, { align: "center" });
+  pdfText(renderText(`${overallScore}٪`), pageWidth - margin - cardWidth / 2, yPos + 25, { align: "center" });
 
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(9);
-  pdf.text(renderText("الدرجة الإجمالية"), pageWidth - margin - cardWidth / 2, yPos + 38, { align: "center" });
+  pdfText(renderText("الدرجة الإجمالية"), pageWidth - margin - cardWidth / 2, yPos + 38, { align: "center" });
 
   // بطاقة المستوى (الوسط)
   const maturityCardColor = maturity?.color || colors.textMuted;
@@ -405,10 +432,10 @@ export async function exportResultsToPDF(
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(18);
   pdf.setTextColor(255, 255, 255);
-  pdf.text(renderText(maturity?.ar || "—"), pageWidth - margin - cardWidth * 1.5 - 10, yPos + 25, { align: "center" });
+  pdfText(renderText(maturity?.ar || "—"), pageWidth - margin - cardWidth * 1.5 - 10, yPos + 25, { align: "center" });
 
   pdf.setFontSize(9);
-  pdf.text(renderText("مستوى النضج"), pageWidth - margin - cardWidth * 1.5 - 10, yPos + 38, { align: "center" });
+  pdfText(renderText("مستوى النضج"), pageWidth - margin - cardWidth * 1.5 - 10, yPos + 38, { align: "center" });
 
   // بطاقة عدد المعايير (أقصى اليسار)
   pdf.setFillColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
@@ -417,11 +444,11 @@ export async function exportResultsToPDF(
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(24);
   pdf.setTextColor(255, 255, 255);
-  pdf.text(renderText(`${dimensionScores.length}`), margin + cardWidth / 2, yPos + 25, { align: "center" });
+  pdfText(renderText(`${dimensionScores.length}`), margin + cardWidth / 2, yPos + 25, { align: "center" });
 
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(9);
-  pdf.text(renderText("معايير التقييم"), margin + cardWidth / 2, yPos + 38, { align: "center" });
+  pdfText(renderText("معايير التقييم"), margin + cardWidth / 2, yPos + 38, { align: "center" });
 
   yPos += cardHeight + 25;
 
@@ -437,13 +464,13 @@ export async function exportResultsToPDF(
     pdf.setTextColor(255, 255, 255);
     pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(9);
-    pdf.text(renderText(`${index + 1}`), pageWidth - margin - 8, itemY + 2, { align: "center" });
+    pdfText(renderText(`${index + 1}`), pageWidth - margin - 8, itemY + 2, { align: "center" });
 
     // اسم المعيار (يمين الرقم)
     pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(10);
     pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-    pdf.text(renderText(ds.dimension.name_ar), pageWidth - margin - 18, itemY + 2, { align: "right" });
+    pdfText(renderText(ds.dimension.name_ar), pageWidth - margin - 18, itemY + 2, { align: "right" });
 
     // النسبة (على اليسار)
     const pctColor = getMaturityColor(ds.percentage);
@@ -452,7 +479,7 @@ export async function exportResultsToPDF(
     pdf.setTextColor(255, 255, 255);
     pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(9);
-    pdf.text(renderText(`${Math.round(ds.percentage)}٪`), margin + 15, itemY + 2, { align: "center" });
+    pdfText(renderText(`${Math.round(ds.percentage)}٪`), margin + 15, itemY + 2, { align: "center" });
 
     yPos += 18;
   };
@@ -623,7 +650,7 @@ export async function exportResultsToPDF(
     pdf.setTextColor(255, 255, 255);
     pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(8);
-    pdf.text(renderText(`${index + 1}`), pageWidth - margin - 12, yPos + 6, { align: "center" });
+    pdfText(renderText(`${index + 1}`), pageWidth - margin - 12, yPos + 6, { align: "center" });
 
     // النص (يمين الرقم) - support multi-line
     pdf.setFont(arabicFont, "normal");
@@ -687,7 +714,7 @@ export async function exportResultsToPDF(
     pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(8);
     pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-    pdf.text(renderText("منصة نُشارك للتقييم الذاتي"), pageWidth / 2, pageHeight - 10, { align: "center" });
+    pdfText(renderText("منصة نُشارك للتقييم الذاتي"), pageWidth / 2, pageHeight - 10, { align: "center" });
 
     // رقم الصفحة (على اليمين - RTL)
     pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
@@ -695,14 +722,14 @@ export async function exportResultsToPDF(
     pdf.setTextColor(255, 255, 255);
     pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(7);
-    pdf.text(renderText(`${i} / ${pageCount}`), pageWidth - margin - 10, pageHeight - 9, { align: "center" });
+    pdfText(renderText(`${i} / ${pageCount}`), pageWidth - margin - 10, pageHeight - 9, { align: "center" });
 
     // اسم المنظمة (على اليسار - RTL)
     if (organization) {
       pdf.setFont(arabicFont, "normal");
       pdf.setFontSize(8);
       pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-      pdf.text(renderText(organization.name), margin, pageHeight - 10, { align: "left" });
+      pdfText(renderText(organization.name), margin, pageHeight - 10, { align: "left" });
     }
   }
 
