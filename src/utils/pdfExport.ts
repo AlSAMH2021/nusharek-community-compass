@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable, { type UserOptions } from "jspdf-autotable";
-import { loadAmiriFont, processArabicText } from "./amiriFont";
+import { loadAmiriFont, processArabicText, processListItemText } from "./amiriFont";
 
 type JsPdfWithAutoTable = jsPDF & {
   autoTable?: (options: UserOptions) => jsPDF;
@@ -511,9 +511,12 @@ export async function exportResultsToPDF(
 
   // Helper function for RTL list items with dynamic height
   const renderListItem = (item: string, index: number, accentColor: ColorTuple) => {
+    // Process the text using the list-specific processor
+    const processedItem = processListItemText(item);
+    
     // Calculate how many lines this text will take
     const maxWidth = pageWidth - margin * 2 - 28;
-    const lines = pdf.splitTextToSize(renderText(item), maxWidth);
+    const lines = pdf.splitTextToSize(processedItem, maxWidth);
     const lineHeight = 5;
     const itemHeight = Math.max(20, 12 + lines.length * lineHeight);
     
