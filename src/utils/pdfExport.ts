@@ -141,6 +141,7 @@ export async function exportResultsToPDF(
     return false;
   };
 
+  // RTL Section Title - accent bar on right side
   const drawSectionTitle = (title: string, accentColor: ColorTuple = colors.primary) => {
     pdf.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
     pdf.roundedRect(pageWidth - margin - 4, yPos, 4, 14, 2, 2, "F");
@@ -153,7 +154,6 @@ export async function exportResultsToPDF(
   };
 
   // ===================== صفحة الغلاف =====================
-  // خلفية بيضاء نظيفة
   pdf.setFillColor(255, 255, 255);
   pdf.rect(0, 0, pageWidth, pageHeight, "F");
 
@@ -165,13 +165,13 @@ export async function exportResultsToPDF(
   pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   pdf.rect(0, pageHeight - 8, pageWidth, 8, "F");
 
+  // زخرفة جانبية يمنى (RTL - الجانب الأهم)
+  pdf.setFillColor(colors.primaryLight[0], colors.primaryLight[1], colors.primaryLight[2]);
+  pdf.rect(pageWidth - 3, 40, 3, pageHeight - 80, "F");
+
   // زخرفة جانبية يسرى
   pdf.setFillColor(colors.primaryLight[0], colors.primaryLight[1], colors.primaryLight[2]);
   pdf.rect(0, 40, 3, pageHeight - 80, "F");
-
-  // زخرفة جانبية يمنى
-  pdf.setFillColor(colors.primaryLight[0], colors.primaryLight[1], colors.primaryLight[2]);
-  pdf.rect(pageWidth - 3, 40, 3, pageHeight - 80, "F");
 
   // الشعار
   try {
@@ -245,7 +245,7 @@ export async function exportResultsToPDF(
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(36);
   pdf.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-  pdf.text(`${overallScore}%`, pageWidth / 2, scoreBoxY + 32, { align: "center" });
+  pdf.text(`%${overallScore}`, pageWidth / 2, scoreBoxY + 32, { align: "center" });
 
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(10);
@@ -281,7 +281,7 @@ export async function exportResultsToPDF(
 
   drawSectionTitle("ملخص تنفيذي");
 
-  // مقدمة
+  // مقدمة - RTL aligned
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(11);
   pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
@@ -295,24 +295,24 @@ export async function exportResultsToPDF(
   });
   yPos += 10;
 
-  // بطاقات الإحصائيات الرئيسية
+  // بطاقات الإحصائيات الرئيسية - RTL order (right to left)
   const cardWidth = (pageWidth - margin * 2 - 20) / 3;
   const cardHeight = 45;
 
-  // بطاقة الدرجة
+  // بطاقة الدرجة (أقصى اليمين)
   pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   pdf.roundedRect(pageWidth - margin - cardWidth, yPos, cardWidth, cardHeight, 6, 6, "F");
   
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(24);
   pdf.setTextColor(255, 255, 255);
-  pdf.text(`${overallScore}%`, pageWidth - margin - cardWidth / 2, yPos + 25, { align: "center" });
+  pdf.text(`%${overallScore}`, pageWidth - margin - cardWidth / 2, yPos + 25, { align: "center" });
   
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(9);
   pdf.text(renderText("الدرجة الإجمالية"), pageWidth - margin - cardWidth / 2, yPos + 38, { align: "center" });
 
-  // بطاقة المستوى
+  // بطاقة المستوى (الوسط)
   const maturityCardColor = maturity?.color || colors.textMuted;
   pdf.setFillColor(maturityCardColor[0], maturityCardColor[1], maturityCardColor[2]);
   pdf.roundedRect(pageWidth - margin - cardWidth * 2 - 10, yPos, cardWidth, cardHeight, 6, 6, "F");
@@ -325,7 +325,7 @@ export async function exportResultsToPDF(
   pdf.setFontSize(9);
   pdf.text(renderText("مستوى النضج"), pageWidth - margin - cardWidth * 1.5 - 10, yPos + 38, { align: "center" });
 
-  // بطاقة عدد المعايير
+  // بطاقة عدد المعايير (أقصى اليسار)
   pdf.setFillColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
   pdf.roundedRect(margin, yPos, cardWidth, cardHeight, 6, 6, "F");
   
@@ -340,18 +340,14 @@ export async function exportResultsToPDF(
 
   yPos += cardHeight + 25;
 
-  // أفضل 3 نتائج
+  // أفضل 3 نتائج - RTL layout
   drawSectionTitle("أبرز نقاط القوة", colors.teal);
 
   const top3 = [...dimensionScores].sort((a, b) => b.percentage - a.percentage).slice(0, 3);
   top3.forEach((ds, index) => {
     const itemY = yPos;
     
-    pdf.setFont(arabicFont, "normal");
-    pdf.setFontSize(10);
-    pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-    
-    // رقم الترتيب
+    // رقم الترتيب (على اليمين)
     pdf.setFillColor(colors.teal[0], colors.teal[1], colors.teal[2]);
     pdf.circle(pageWidth - margin - 8, itemY, 5, "F");
     pdf.setTextColor(255, 255, 255);
@@ -359,27 +355,27 @@ export async function exportResultsToPDF(
     pdf.setFontSize(9);
     pdf.text(`${index + 1}`, pageWidth - margin - 8, itemY + 2, { align: "center" });
 
-    // اسم المعيار
+    // اسم المعيار (يمين الرقم)
     pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(10);
     pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
     pdf.text(renderText(ds.dimension.name_ar), pageWidth - margin - 18, itemY + 2, { align: "right" });
 
-    // النسبة
+    // النسبة (على اليسار)
     const pctColor = getMaturityColor(ds.percentage);
     pdf.setFillColor(pctColor[0], pctColor[1], pctColor[2]);
     pdf.roundedRect(margin, itemY - 5, 30, 12, 6, 6, "F");
     pdf.setTextColor(255, 255, 255);
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(9);
-    pdf.text(`${Math.round(ds.percentage)}%`, margin + 15, itemY + 2, { align: "center" });
+    pdf.text(`%${Math.round(ds.percentage)}`, margin + 15, itemY + 2, { align: "center" });
 
     yPos += 18;
   });
 
   yPos += 15;
 
-  // أهم فرص التحسين
+  // أهم فرص التحسين - RTL layout
   drawSectionTitle("أهم فرص التحسين", colors.coral);
 
   const bottom3 = [...dimensionScores].sort((a, b) => a.percentage - b.percentage).slice(0, 3);
@@ -404,7 +400,7 @@ export async function exportResultsToPDF(
     pdf.setTextColor(255, 255, 255);
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(9);
-    pdf.text(`${Math.round(ds.percentage)}%`, margin + 15, itemY + 2, { align: "center" });
+    pdf.text(`%${Math.round(ds.percentage)}`, margin + 15, itemY + 2, { align: "center" });
 
     yPos += 18;
   });
@@ -415,14 +411,14 @@ export async function exportResultsToPDF(
 
   drawSectionTitle("تفاصيل نتائج المعايير");
 
-  // جدول النتائج
+  // جدول النتائج - RTL column order (right to left: #, المعيار, الدرجة, النسبة, الحالة)
   const tableData = dimensionScores.map((ds) => ({
     data: [
-      renderText(getMaturityLabel(ds.percentage)),
-      `${Math.round(ds.percentage)}%`,
-      `${ds.score} / ${ds.max_possible_score}`,
-      renderText(ds.dimension.name_ar),
       ds.dimension.order_index.toString(),
+      renderText(ds.dimension.name_ar),
+      `${ds.score} / ${ds.max_possible_score}`,
+      `%${Math.round(ds.percentage)}`,
+      renderText(getMaturityLabel(ds.percentage)),
     ],
     statusColor: getMaturityColor(ds.percentage),
     percentage: ds.percentage,
@@ -430,7 +426,7 @@ export async function exportResultsToPDF(
 
   const tableOptions: UserOptions = {
     startY: yPos,
-    head: [[renderText("الحالة"), renderText("النسبة"), renderText("الدرجة"), renderText("المعيار"), "#"]],
+    head: [["#", renderText("المعيار"), renderText("الدرجة"), renderText("النسبة"), renderText("الحالة")]],
     body: tableData.map((row) => row.data),
     theme: "plain",
     styles: {
@@ -460,22 +456,25 @@ export async function exportResultsToPDF(
       fillColor: colors.bgLight,
     },
     columnStyles: {
-      0: { cellWidth: 26, halign: "center" },
-      1: { cellWidth: 22, halign: "center" },
+      0: { cellWidth: 14, halign: "center", fillColor: colors.bgLight },
+      1: { cellWidth: 78, halign: "right" },
       2: { cellWidth: 28, halign: "center" },
-      3: { cellWidth: 78, halign: "right" },
-      4: { cellWidth: 14, halign: "center", fillColor: colors.bgLight },
+      3: { cellWidth: 22, halign: "center" },
+      4: { cellWidth: 26, halign: "center" },
     },
     margin: { left: margin, right: margin },
+    tableWidth: "auto",
     didDrawCell: (data) => {
-      if (data.section === "body" && data.column.index === 0) {
+      // Status color indicator
+      if (data.section === "body" && data.column.index === 4) {
         const rowIndex = data.row.index;
         const statusColor = tableData[rowIndex]?.statusColor || colors.textMuted;
         pdf.setFillColor(statusColor[0], statusColor[1], statusColor[2]);
-        pdf.circle(data.cell.x + data.cell.width - 5, data.cell.y + data.cell.height / 2, 2, "F");
+        pdf.circle(data.cell.x + 5, data.cell.y + data.cell.height / 2, 2, "F");
       }
 
-      if (data.section === "body" && data.column.index === 1) {
+      // Progress bar in percentage column
+      if (data.section === "body" && data.column.index === 3) {
         const rowIndex = data.row.index;
         const percentage = tableData[rowIndex]?.percentage || 0;
         const barColor = tableData[rowIndex]?.statusColor || colors.textMuted;
@@ -504,11 +503,11 @@ export async function exportResultsToPDF(
   const finalY = pdf.lastAutoTable?.finalY;
   yPos = (typeof finalY === "number" ? finalY : yPos) + 15;
 
-  // مفتاح الألوان
+  // مفتاح الألوان - RTL order
   const legendItems = [
-    { label: "مثالي", range: "75-100%", color: colors.teal },
-    { label: "ناشئ", range: "50-74%", color: colors.gold },
-    { label: "أساسي", range: "0-49%", color: colors.coral },
+    { label: "مثالي", range: "%75-100", color: colors.teal },
+    { label: "ناشئ", range: "%50-74", color: colors.gold },
+    { label: "أساسي", range: "%0-49", color: colors.coral },
   ];
 
   pdf.setFont(arabicFont, "normal");
@@ -528,34 +527,42 @@ export async function exportResultsToPDF(
   pdf.addPage();
   yPos = 30;
 
+  // Helper function for RTL list items
+  const renderListItem = (item: string, index: number, accentColor: ColorTuple) => {
+    checkPageBreak(20);
+
+    // خلفية البطاقة
+    pdf.setFillColor(colors.bgLight[0], colors.bgLight[1], colors.bgLight[2]);
+    pdf.roundedRect(margin, yPos - 4, pageWidth - margin * 2, 16, 4, 4, "F");
+
+    // شريط ملون على اليمين (RTL)
+    pdf.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
+    pdf.roundedRect(pageWidth - margin - 3, yPos, 3, 8, 1.5, 1.5, "F");
+
+    // رقم الترتيب (على اليمين)
+    pdf.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
+    pdf.circle(pageWidth - margin - 12, yPos + 4, 4, "F");
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(8);
+    pdf.text(`${index + 1}`, pageWidth - margin - 12, yPos + 6, { align: "center" });
+
+    // النص (يمين الرقم)
+    const maxWidth = pageWidth - margin * 2 - 25;
+    const lines = pdf.splitTextToSize(renderText(item), maxWidth);
+    pdf.setFont(arabicFont, "normal");
+    pdf.setFontSize(9);
+    pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
+    pdf.text(lines[0], pageWidth - margin - 20, yPos + 6, { align: "right" });
+
+    yPos += 20;
+  };
+
   // نقاط القوة
   if (strengths.length > 0) {
     drawSectionTitle("نقاط القوة", colors.teal);
-
     strengths.slice(0, 5).forEach((item, index) => {
-      checkPageBreak(20);
-
-      pdf.setFillColor(colors.bgLight[0], colors.bgLight[1], colors.bgLight[2]);
-      pdf.roundedRect(margin, yPos - 4, pageWidth - margin * 2, 16, 4, 4, "F");
-
-      pdf.setFillColor(colors.teal[0], colors.teal[1], colors.teal[2]);
-      pdf.roundedRect(pageWidth - margin - 3, yPos, 3, 8, 1.5, 1.5, "F");
-
-      pdf.setFillColor(colors.teal[0], colors.teal[1], colors.teal[2]);
-      pdf.circle(pageWidth - margin - 12, yPos + 4, 4, "F");
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(8);
-      pdf.text(`${index + 1}`, pageWidth - margin - 12, yPos + 6, { align: "center" });
-
-      const maxWidth = pageWidth - margin * 2 - 25;
-      const lines = pdf.splitTextToSize(renderText(item), maxWidth);
-      pdf.setFont(arabicFont, "normal");
-      pdf.setFontSize(9);
-      pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-      pdf.text(lines[0], pageWidth - margin - 20, yPos + 6, { align: "right" });
-
-      yPos += 20;
+      renderListItem(item, index, colors.teal);
     });
     yPos += 10;
   }
@@ -564,31 +571,8 @@ export async function exportResultsToPDF(
   checkPageBreak(60);
   if (opportunities.length > 0) {
     drawSectionTitle("فرص التحسين", colors.gold);
-
     opportunities.slice(0, 5).forEach((item, index) => {
-      checkPageBreak(20);
-
-      pdf.setFillColor(colors.bgLight[0], colors.bgLight[1], colors.bgLight[2]);
-      pdf.roundedRect(margin, yPos - 4, pageWidth - margin * 2, 16, 4, 4, "F");
-
-      pdf.setFillColor(colors.gold[0], colors.gold[1], colors.gold[2]);
-      pdf.roundedRect(pageWidth - margin - 3, yPos, 3, 8, 1.5, 1.5, "F");
-
-      pdf.setFillColor(colors.gold[0], colors.gold[1], colors.gold[2]);
-      pdf.circle(pageWidth - margin - 12, yPos + 4, 4, "F");
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(8);
-      pdf.text(`${index + 1}`, pageWidth - margin - 12, yPos + 6, { align: "center" });
-
-      const maxWidth = pageWidth - margin * 2 - 25;
-      const lines = pdf.splitTextToSize(renderText(item), maxWidth);
-      pdf.setFont(arabicFont, "normal");
-      pdf.setFontSize(9);
-      pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-      pdf.text(lines[0], pageWidth - margin - 20, yPos + 6, { align: "right" });
-
-      yPos += 20;
+      renderListItem(item, index, colors.gold);
     });
     yPos += 10;
   }
@@ -597,31 +581,8 @@ export async function exportResultsToPDF(
   checkPageBreak(60);
   if (recommendations.length > 0) {
     drawSectionTitle("التوصيات العملية", colors.primary);
-
     recommendations.slice(0, 6).forEach((item, index) => {
-      checkPageBreak(20);
-
-      pdf.setFillColor(colors.bgLight[0], colors.bgLight[1], colors.bgLight[2]);
-      pdf.roundedRect(margin, yPos - 4, pageWidth - margin * 2, 16, 4, 4, "F");
-
-      pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-      pdf.roundedRect(pageWidth - margin - 3, yPos, 3, 8, 1.5, 1.5, "F");
-
-      pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-      pdf.circle(pageWidth - margin - 12, yPos + 4, 4, "F");
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(8);
-      pdf.text(`${index + 1}`, pageWidth - margin - 12, yPos + 6, { align: "center" });
-
-      const maxWidth = pageWidth - margin * 2 - 25;
-      const lines = pdf.splitTextToSize(renderText(item), maxWidth);
-      pdf.setFont(arabicFont, "normal");
-      pdf.setFontSize(9);
-      pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-      pdf.text(lines[0], pageWidth - margin - 20, yPos + 6, { align: "right" });
-
-      yPos += 20;
+      renderListItem(item, index, colors.primary);
     });
   }
 
@@ -637,26 +598,26 @@ export async function exportResultsToPDF(
     pdf.setLineWidth(0.5);
     pdf.line(margin, pageHeight - 18, pageWidth - margin, pageHeight - 18);
 
-    // نص الفوتر
+    // نص الفوتر (وسط)
     pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(8);
     pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
     pdf.text(renderText("منصة نُشارك للتقييم الذاتي"), pageWidth / 2, pageHeight - 10, { align: "center" });
 
-    // رقم الصفحة
+    // رقم الصفحة (على اليمين - RTL)
     pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-    pdf.roundedRect(margin, pageHeight - 14, 20, 8, 2, 2, "F");
+    pdf.roundedRect(pageWidth - margin - 20, pageHeight - 14, 20, 8, 2, 2, "F");
     pdf.setTextColor(255, 255, 255);
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(7);
-    pdf.text(`${i} / ${pageCount}`, margin + 10, pageHeight - 9, { align: "center" });
+    pdf.text(`${i} / ${pageCount}`, pageWidth - margin - 10, pageHeight - 9, { align: "center" });
 
-    // اسم المنظمة
+    // اسم المنظمة (على اليسار - RTL)
     if (organization) {
       pdf.setFont(arabicFont, "normal");
       pdf.setFontSize(8);
       pdf.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-      pdf.text(renderText(organization.name), pageWidth - margin, pageHeight - 10, { align: "right" });
+      pdf.text(renderText(organization.name), margin, pageHeight - 10, { align: "left" });
     }
   }
 
