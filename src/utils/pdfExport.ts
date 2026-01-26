@@ -189,6 +189,21 @@ export async function exportResultsToPDF(
     return hasAmiri ? processArabicText(normalized) : normalized;
   };
 
+  // Centralized jsPDF text helper to enable built-in RTL handling
+  const pdfText = (
+    text: string | string[],
+    x: number,
+    y: number,
+    options: Record<string, unknown> = {},
+  ) => {
+    pdf.text(text as any, x, y, {
+      ...options,
+      isInputRtl: true,
+      isOutputRtl: true,
+      isSymmetricSwapping: true,
+    } as any);
+  };
+
   const getMaturityColor = (percentage: number): ColorTuple => {
     if (percentage >= 75) return colors.teal;
     if (percentage >= 50) return colors.gold;
@@ -227,7 +242,7 @@ export async function exportResultsToPDF(
     pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(16);
     pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-    pdf.text(renderText(title), pageWidth - margin - 10, yPos + 10, { align: "right" });
+    pdfText(renderText(title), pageWidth - margin - 10, yPos + 10, { align: "right" });
     yPos += 22;
   };
 
@@ -360,7 +375,7 @@ export async function exportResultsToPDF(
     : "يعرض هذا التقرير نتائج تقييم النضج في المشاركة المجتمعية.";
   const introLines = pdf.splitTextToSize(renderText(introText), pageWidth - margin * 2);
   introLines.forEach((line: string) => {
-    pdf.text(line, pageWidth - margin, yPos, { align: "right" });
+    pdfText(line, pageWidth - margin, yPos, { align: "right" });
     yPos += 6;
   });
   yPos += 10;
@@ -576,7 +591,7 @@ export async function exportResultsToPDF(
     pdf.circle(x, yPos, 3, "F");
 
     pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-    pdf.text(renderText(`${item.label} (${item.range})`), x - 6, yPos + 2, { align: "right" });
+    pdfText(renderText(`${item.label} (${item.range})`), x - 6, yPos + 2, { align: "right" });
   });
 
   // ===================== صفحة 4: التوصيات =====================
@@ -617,7 +632,7 @@ export async function exportResultsToPDF(
     
     let textY = yPos + 6;
     lines.forEach((line: string) => {
-      pdf.text(line, pageWidth - margin - 20, textY, { align: "right" });
+      pdfText(line, pageWidth - margin - 20, textY, { align: "right" });
       textY += lineHeight;
     });
 
