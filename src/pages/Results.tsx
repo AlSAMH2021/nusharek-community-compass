@@ -23,7 +23,8 @@ import {
   Award,
   FileDown,
   PieChart,
-  BarChart2
+  BarChart2,
+  Printer
 } from "lucide-react";
 
 interface Assessment {
@@ -253,6 +254,13 @@ export default function Results() {
                 <FileDown className="ml-2 h-4 w-4" />
               )}
               تصدير PDF
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => window.print()}
+            >
+              <Printer className="ml-2 h-4 w-4" />
+              طباعة الصفحة
             </Button>
             <Button variant="outline" asChild>
               <Link to="/dashboard">
