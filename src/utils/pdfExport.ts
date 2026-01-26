@@ -145,7 +145,7 @@ export async function exportResultsToPDF(
   const drawSectionTitle = (title: string, accentColor: ColorTuple = colors.primary) => {
     pdf.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
     pdf.roundedRect(pageWidth - margin - 4, yPos, 4, 14, 2, 2, "F");
-    
+
     pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(16);
     pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
@@ -164,14 +164,6 @@ export async function exportResultsToPDF(
   // شريط سفلي بنفسجي
   pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   pdf.rect(0, pageHeight - 8, pageWidth, 8, "F");
-
-  // زخرفة جانبية يمنى (RTL - الجانب الأهم)
-  pdf.setFillColor(colors.primaryLight[0], colors.primaryLight[1], colors.primaryLight[2]);
-  pdf.rect(pageWidth - 3, 40, 3, pageHeight - 80, "F");
-
-  // زخرفة جانبية يسرى
-  pdf.setFillColor(colors.primaryLight[0], colors.primaryLight[1], colors.primaryLight[2]);
-  pdf.rect(0, 40, 3, pageHeight - 80, "F");
 
   // الشعار
   try {
@@ -235,7 +227,7 @@ export async function exportResultsToPDF(
   const scoreBoxWidth = 100;
   const scoreBoxHeight = 50;
   const scoreBoxX = (pageWidth - scoreBoxWidth) / 2;
-  
+
   pdf.setFillColor(colors.bgLight[0], colors.bgLight[1], colors.bgLight[2]);
   pdf.setDrawColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   pdf.setLineWidth(1.5);
@@ -302,12 +294,12 @@ export async function exportResultsToPDF(
   // بطاقة الدرجة (أقصى اليمين)
   pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   pdf.roundedRect(pageWidth - margin - cardWidth, yPos, cardWidth, cardHeight, 6, 6, "F");
-  
+
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(24);
   pdf.setTextColor(255, 255, 255);
   pdf.text(`%${overallScore}`, pageWidth - margin - cardWidth / 2, yPos + 25, { align: "center" });
-  
+
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(9);
   pdf.text(renderText("الدرجة الإجمالية"), pageWidth - margin - cardWidth / 2, yPos + 38, { align: "center" });
@@ -316,24 +308,24 @@ export async function exportResultsToPDF(
   const maturityCardColor = maturity?.color || colors.textMuted;
   pdf.setFillColor(maturityCardColor[0], maturityCardColor[1], maturityCardColor[2]);
   pdf.roundedRect(pageWidth - margin - cardWidth * 2 - 10, yPos, cardWidth, cardHeight, 6, 6, "F");
-  
+
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(18);
   pdf.setTextColor(255, 255, 255);
   pdf.text(renderText(maturity?.ar || "—"), pageWidth - margin - cardWidth * 1.5 - 10, yPos + 25, { align: "center" });
-  
+
   pdf.setFontSize(9);
   pdf.text(renderText("مستوى النضج"), pageWidth - margin - cardWidth * 1.5 - 10, yPos + 38, { align: "center" });
 
   // بطاقة عدد المعايير (أقصى اليسار)
   pdf.setFillColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
   pdf.roundedRect(margin, yPos, cardWidth, cardHeight, 6, 6, "F");
-  
+
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(24);
   pdf.setTextColor(255, 255, 255);
   pdf.text(`${dimensionScores.length}`, margin + cardWidth / 2, yPos + 25, { align: "center" });
-  
+
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(9);
   pdf.text(renderText("معايير التقييم"), margin + cardWidth / 2, yPos + 38, { align: "center" });
@@ -346,7 +338,7 @@ export async function exportResultsToPDF(
   const top3 = [...dimensionScores].sort((a, b) => b.percentage - a.percentage).slice(0, 3);
   top3.forEach((ds, index) => {
     const itemY = yPos;
-    
+
     // رقم الترتيب (على اليمين)
     pdf.setFillColor(colors.teal[0], colors.teal[1], colors.teal[2]);
     pdf.circle(pageWidth - margin - 8, itemY, 5, "F");
@@ -381,7 +373,7 @@ export async function exportResultsToPDF(
   const bottom3 = [...dimensionScores].sort((a, b) => a.percentage - b.percentage).slice(0, 3);
   bottom3.forEach((ds, index) => {
     const itemY = yPos;
-    
+
     pdf.setFillColor(colors.coral[0], colors.coral[1], colors.coral[2]);
     pdf.circle(pageWidth - margin - 8, itemY, 5, "F");
     pdf.setTextColor(255, 255, 255);
@@ -515,10 +507,10 @@ export async function exportResultsToPDF(
 
   legendItems.forEach((item, index) => {
     const x = pageWidth - margin - 10 - index * 55;
-    
+
     pdf.setFillColor(item.color[0], item.color[1], item.color[2]);
     pdf.circle(x, yPos, 3, "F");
-    
+
     pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
     pdf.text(renderText(`${item.label} (${item.range})`), x - 6, yPos + 2, { align: "right" });
   });
