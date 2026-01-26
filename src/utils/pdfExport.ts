@@ -337,14 +337,13 @@ export async function exportResultsToPDF(
   yPos += cardHeight + 25;
 
   // أفضل 3 نتائج - RTL layout
-  drawSectionTitle("أبرز نقاط القوة", colors.teal);
-
-  const top3 = [...dimensionScores].sort((a, b) => b.percentage - a.percentage).slice(0, 3);
-  top3.forEach((ds, index) => {
+  // Helper function to render summary list item
+  const renderSummaryItem = (ds: DimensionScore, index: number, accentColor: ColorTuple) => {
+    checkPageBreak(25);
     const itemY = yPos;
 
     // رقم الترتيب (على اليمين)
-    pdf.setFillColor(colors.teal[0], colors.teal[1], colors.teal[2]);
+    pdf.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
     pdf.circle(pageWidth - margin - 8, itemY, 5, "F");
     pdf.setTextColor(255, 255, 255);
     pdf.setFont("helvetica", "bold");
@@ -367,38 +366,25 @@ export async function exportResultsToPDF(
     pdf.text(`%${Math.round(ds.percentage)}`, margin + 15, itemY + 2, { align: "center" });
 
     yPos += 18;
+  };
+
+  checkPageBreak(80); // Space for title + 3 items
+  drawSectionTitle("أبرز نقاط القوة", colors.teal);
+
+  const top3 = [...dimensionScores].sort((a, b) => b.percentage - a.percentage).slice(0, 3);
+  top3.forEach((ds, index) => {
+    renderSummaryItem(ds, index, colors.teal);
   });
 
   yPos += 15;
 
   // أهم فرص التحسين - RTL layout
+  checkPageBreak(80); // Space for title + 3 items
   drawSectionTitle("أهم فرص التحسين", colors.coral);
 
   const bottom3 = [...dimensionScores].sort((a, b) => a.percentage - b.percentage).slice(0, 3);
   bottom3.forEach((ds, index) => {
-    const itemY = yPos;
-
-    pdf.setFillColor(colors.coral[0], colors.coral[1], colors.coral[2]);
-    pdf.circle(pageWidth - margin - 8, itemY, 5, "F");
-    pdf.setTextColor(255, 255, 255);
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(9);
-    pdf.text(`${index + 1}`, pageWidth - margin - 8, itemY + 2, { align: "center" });
-
-    pdf.setFont(arabicFont, "normal");
-    pdf.setFontSize(10);
-    pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-    pdf.text(renderText(ds.dimension.name_ar), pageWidth - margin - 18, itemY + 2, { align: "right" });
-
-    const pctColor = getMaturityColor(ds.percentage);
-    pdf.setFillColor(pctColor[0], pctColor[1], pctColor[2]);
-    pdf.roundedRect(margin, itemY - 5, 30, 12, 6, 6, "F");
-    pdf.setTextColor(255, 255, 255);
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(9);
-    pdf.text(`%${Math.round(ds.percentage)}`, margin + 15, itemY + 2, { align: "center" });
-
-    yPos += 18;
+    renderSummaryItem(ds, index, colors.coral);
   });
 
   // ===================== صفحة 3: تفاصيل المعايير =====================
