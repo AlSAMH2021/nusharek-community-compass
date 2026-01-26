@@ -132,8 +132,12 @@ export async function exportResultsToPDF(
     return new Date(dateStr).toLocaleDateString("ar-SA", { year: "numeric", month: "long", day: "numeric" });
   };
 
+  // Footer takes ~22mm at the bottom (18mm visible + margin buffer)
+  const footerHeight = 25;
+  
   const checkPageBreak = (neededSpace: number = 40): boolean => {
-    if (yPos > pageHeight - neededSpace) {
+    const availableSpace = pageHeight - footerHeight;
+    if (yPos + neededSpace > availableSpace) {
       pdf.addPage();
       yPos = 30;
       return true;
@@ -519,17 +523,24 @@ export async function exportResultsToPDF(
   pdf.addPage();
   yPos = 30;
 
-  // Helper function for RTL list items
+  // Helper function for RTL list items with dynamic height
   const renderListItem = (item: string, index: number, accentColor: ColorTuple) => {
-    checkPageBreak(20);
+    // Calculate how many lines this text will take
+    const maxWidth = pageWidth - margin * 2 - 28;
+    const lines = pdf.splitTextToSize(renderText(item), maxWidth);
+    const lineHeight = 5;
+    const itemHeight = Math.max(20, 12 + lines.length * lineHeight);
+    
+    // Check if we need a new page BEFORE drawing (with extra buffer for footer)
+    checkPageBreak(itemHeight + 5);
 
-    // خلفية البطاقة
+    // خلفية البطاقة - dynamic height based on content
     pdf.setFillColor(colors.bgLight[0], colors.bgLight[1], colors.bgLight[2]);
-    pdf.roundedRect(margin, yPos - 4, pageWidth - margin * 2, 16, 4, 4, "F");
+    pdf.roundedRect(margin, yPos - 4, pageWidth - margin * 2, itemHeight - 2, 4, 4, "F");
 
     // شريط ملون على اليمين (RTL)
     pdf.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
-    pdf.roundedRect(pageWidth - margin - 3, yPos, 3, 8, 1.5, 1.5, "F");
+    pdf.roundedRect(pageWidth - margin - 3, yPos, 3, itemHeight - 10, 1.5, 1.5, "F");
 
     // رقم الترتيب (على اليمين)
     pdf.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
@@ -539,44 +550,51 @@ export async function exportResultsToPDF(
     pdf.setFontSize(8);
     pdf.text(`${index + 1}`, pageWidth - margin - 12, yPos + 6, { align: "center" });
 
-    // النص (يمين الرقم)
-    const maxWidth = pageWidth - margin * 2 - 25;
-    const lines = pdf.splitTextToSize(renderText(item), maxWidth);
+    // النص (يمين الرقم) - support multi-line
     pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(9);
     pdf.setTextColor(colors.text[0], colors.text[1], colors.text[2]);
-    pdf.text(lines[0], pageWidth - margin - 20, yPos + 6, { align: "right" });
+    
+    let textY = yPos + 6;
+    lines.forEach((line: string) => {
+      pdf.text(line, pageWidth - margin - 20, textY, { align: "right" });
+      textY += lineHeight;
+    });
 
-    yPos += 20;
+    yPos += itemHeight;
   };
 
   // نقاط القوة
   if (strengths.length > 0) {
+    checkPageBreak(45); // Ensure space for title + at least one item
     drawSectionTitle("نقاط القوة", colors.teal);
     strengths.slice(0, 5).forEach((item, index) => {
       renderListItem(item, index, colors.teal);
     });
-    yPos += 10;
+    yPos += 12;
   }
 
   // فرص التحسين
-  checkPageBreak(60);
   if (opportunities.length > 0) {
+    checkPageBreak(45); // Ensure space for title + at least one item
     drawSectionTitle("فرص التحسين", colors.gold);
     opportunities.slice(0, 5).forEach((item, index) => {
       renderListItem(item, index, colors.gold);
     });
-    yPos += 10;
+    yPos += 12;
   }
 
   // التوصيات
-  checkPageBreak(60);
   if (recommendations.length > 0) {
+    checkPageBreak(45); // Ensure space for title + at least one item
     drawSectionTitle("التوصيات العملية", colors.primary);
     recommendations.slice(0, 6).forEach((item, index) => {
       renderListItem(item, index, colors.primary);
     });
   }
+  
+  // Add final spacing before footer on last content page
+  yPos += 10;
 
   // ===================== الفوتر على جميع الصفحات =====================
   const pageCount = pdf.getNumberOfPages();
