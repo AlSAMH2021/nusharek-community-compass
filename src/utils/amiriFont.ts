@@ -42,20 +42,68 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
 }
 
 /**
+ * Reverse a string while keeping certain character sequences intact
+ * (like numbers and Latin characters)
+ */
+function reverseStringForPdf(text: string): string {
+  // Split into segments: Arabic vs non-Arabic (numbers, Latin, symbols)
+  const segments: { text: string; isArabic: boolean }[] = [];
+  let currentSegment = "";
+  let currentIsArabic = false;
+
+  for (const char of text) {
+    // Check if character is Arabic (includes Arabic-Indic digits)
+    const isArabicChar = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(char);
+    
+    if (currentSegment === "") {
+      currentIsArabic = isArabicChar;
+      currentSegment = char;
+    } else if (isArabicChar === currentIsArabic) {
+      currentSegment += char;
+    } else {
+      segments.push({ text: currentSegment, isArabic: currentIsArabic });
+      currentSegment = char;
+      currentIsArabic = isArabicChar;
+    }
+  }
+  
+  if (currentSegment) {
+    segments.push({ text: currentSegment, isArabic: currentIsArabic });
+  }
+
+  // Reverse the order of segments, and reverse Arabic segments internally
+  const reversedSegments = segments.reverse().map(seg => {
+    if (seg.isArabic) {
+      // Reverse Arabic text character by character
+      return [...seg.text].reverse().join("");
+    }
+    // Keep non-Arabic segments as-is (numbers, Latin text)
+    return seg.text;
+  });
+
+  return reversedSegments.join("");
+}
+
+/**
  * Process Arabic text for proper PDF rendering
  * 
- * IMPORTANT: We ONLY use reshaping to connect Arabic letters properly.
- * We do NOT reverse or reorder text because jsPDF handles RTL automatically
- * when using align: "right"
+ * jsPDF does NOT support RTL natively. When using align: "right",
+ * it just positions the starting point on the right but still draws
+ * characters left-to-right. Therefore we must:
+ * 1. Reshape Arabic characters (connect letters properly)
+ * 2. Reverse the text so it displays correctly when drawn LTR
  */
 export function processArabicText(text: string): string {
   if (!text) return text;
   
   try {
-    // Only reshape Arabic text to handle proper character connections (ligatures)
-    // Do NOT reverse or reorder - jsPDF handles RTL with align: "right"
+    // Step 1: Reshape Arabic text to handle proper character connections (ligatures)
     const reshaped = reshape(text);
-    return reshaped;
+    
+    // Step 2: Reverse the text for correct RTL display in jsPDF
+    const reversed = reverseStringForPdf(reshaped);
+    
+    return reversed;
   } catch (error) {
     console.warn("Arabic text processing failed, using original:", error);
     return text;
@@ -69,7 +117,7 @@ export function reverseArabicText(text: string): string {
 
 /**
  * Process text specifically for PDF list items
- * Same as processArabicText - just reshape, no reordering
+ * Same as processArabicText
  */
 export function processListItemText(text: string): string {
   return processArabicText(text);
