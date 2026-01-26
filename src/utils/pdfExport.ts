@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import autoTable, { type UserOptions } from "jspdf-autotable";
-import { loadAmiriFont, processArabicText, processListItemText } from "./amiriFont";
+import { loadAmiriFont, processArabicText } from "./amiriFont";
 
 type JsPdfWithAutoTable = jsPDF & {
   autoTable?: (options: UserOptions) => jsPDF;
@@ -95,6 +95,79 @@ export async function exportResultsToPDF(
   const margin = 20;
   let yPos = 30;
 
+  // ---------------- Text normalization (numbers/percents/technical terms) ----------------
+  const westernToArabicDigitsMap: Record<string, string> = {
+    "0": "٠",
+    "1": "١",
+    "2": "٢",
+    "3": "٣",
+    "4": "٤",
+    "5": "٥",
+    "6": "٦",
+    "7": "٧",
+    "8": "٨",
+    "9": "٩",
+  };
+
+  const technicalTermsToStrip = [
+    "word-break-all",
+    "overflow-wrap",
+    "break-word",
+    "break-all",
+    "white-space",
+    "text-overflow",
+  ];
+
+  const stripTechnicalTerms = (input: string): string => {
+    if (!input) return input;
+    let out = input;
+    for (const term of technicalTermsToStrip) {
+      out = out.replace(new RegExp(`\\b${term}\\b`, "gi"), " ");
+    }
+    return out.replace(/\s+/g, " ").trim();
+  };
+
+  const mapWesternDigitsToArabic = (input: string): string =>
+    input.replace(/[0-9]/g, (d) => westernToArabicDigitsMap[d] ?? d);
+
+  const normalizePercents = (input: string): string => {
+    // 52%  -> 52٪
+    // %52  -> 52٪
+    // %75-100 -> 75٪-100٪
+    // 75%-100% -> 75٪-100٪
+    let out = input;
+
+    // Convert leading percent before number to trailing percent
+    out = out.replace(/%\s*(\d+)/g, "$1%");
+
+    // Normalize percent sign to Arabic percent
+    out = out.replace(/%/g, "٪");
+
+    // Ensure ranges have percent on both ends: 75٪-100 -> 75٪-100٪
+    out = out.replace(/(\d+\s*٪)\s*[-–—]\s*(\d+)(?!\s*٪)/g, "$1-$2٪");
+
+    return out;
+  };
+
+  const stabilizePercentParentheses = (input: string): string => {
+    // Wrap parenthetical % blocks with RLM to keep parentheses in correct visual order
+    const RLM = "\u200F";
+    return input.replace(/\(([^)]*٪[^)]*)\)/g, (_, inner) => `${RLM}(${inner})${RLM}`);
+  };
+
+  const normalizeForPdf = (input: string): string => {
+    let out = stripTechnicalTerms(input);
+    out = normalizePercents(out);
+    out = mapWesternDigitsToArabic(out);
+    out = stabilizePercentParentheses(out);
+    return out;
+  };
+
+  // Clean lists BEFORE processing (explicit user requirement)
+  const cleanedStrengths = strengths.map(normalizeForPdf).filter(Boolean);
+  const cleanedOpportunities = opportunities.map(normalizeForPdf).filter(Boolean);
+  const cleanedRecommendations = recommendations.map(normalizeForPdf).filter(Boolean);
+
   // Brand colors
   type ColorTuple = [number, number, number];
   const colors = {
@@ -112,7 +185,8 @@ export async function exportResultsToPDF(
   };
 
   const renderText = (text: string): string => {
-    return hasAmiri ? processArabicText(text) : text;
+    const normalized = normalizeForPdf(text);
+    return hasAmiri ? processArabicText(normalized) : normalized;
   };
 
   const getMaturityColor = (percentage: number): ColorTuple => {
@@ -238,10 +312,10 @@ export async function exportResultsToPDF(
   pdf.roundedRect(scoreBoxX, scoreBoxY, scoreBoxWidth, scoreBoxHeight, 8, 8, "FD");
 
   const overallScore = Math.round(assessment.overall_score || 0);
-  pdf.setFont("helvetica", "bold");
+  pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(36);
   pdf.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-  pdf.text(`%${overallScore}`, pageWidth / 2, scoreBoxY + 32, { align: "center" });
+  pdf.text(renderText(`${overallScore}٪`), pageWidth / 2, scoreBoxY + 32, { align: "center" });
 
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(10);
@@ -299,10 +373,10 @@ export async function exportResultsToPDF(
   pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   pdf.roundedRect(pageWidth - margin - cardWidth, yPos, cardWidth, cardHeight, 6, 6, "F");
 
-  pdf.setFont("helvetica", "bold");
+  pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(24);
   pdf.setTextColor(255, 255, 255);
-  pdf.text(`%${overallScore}`, pageWidth - margin - cardWidth / 2, yPos + 25, { align: "center" });
+  pdf.text(renderText(`${overallScore}٪`), pageWidth - margin - cardWidth / 2, yPos + 25, { align: "center" });
 
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(9);
@@ -325,10 +399,10 @@ export async function exportResultsToPDF(
   pdf.setFillColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
   pdf.roundedRect(margin, yPos, cardWidth, cardHeight, 6, 6, "F");
 
-  pdf.setFont("helvetica", "bold");
+  pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(24);
   pdf.setTextColor(255, 255, 255);
-  pdf.text(`${dimensionScores.length}`, margin + cardWidth / 2, yPos + 25, { align: "center" });
+  pdf.text(renderText(`${dimensionScores.length}`), margin + cardWidth / 2, yPos + 25, { align: "center" });
 
   pdf.setFont(arabicFont, "normal");
   pdf.setFontSize(9);
@@ -346,9 +420,9 @@ export async function exportResultsToPDF(
     pdf.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
     pdf.circle(pageWidth - margin - 8, itemY, 5, "F");
     pdf.setTextColor(255, 255, 255);
-    pdf.setFont("helvetica", "bold");
+    pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(9);
-    pdf.text(`${index + 1}`, pageWidth - margin - 8, itemY + 2, { align: "center" });
+    pdf.text(renderText(`${index + 1}`), pageWidth - margin - 8, itemY + 2, { align: "center" });
 
     // اسم المعيار (يمين الرقم)
     pdf.setFont(arabicFont, "normal");
@@ -361,9 +435,9 @@ export async function exportResultsToPDF(
     pdf.setFillColor(pctColor[0], pctColor[1], pctColor[2]);
     pdf.roundedRect(margin, itemY - 5, 30, 12, 6, 6, "F");
     pdf.setTextColor(255, 255, 255);
-    pdf.setFont("helvetica", "bold");
+    pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(9);
-    pdf.text(`%${Math.round(ds.percentage)}`, margin + 15, itemY + 2, { align: "center" });
+    pdf.text(renderText(`${Math.round(ds.percentage)}٪`), margin + 15, itemY + 2, { align: "center" });
 
     yPos += 18;
   };
@@ -396,10 +470,10 @@ export async function exportResultsToPDF(
   // جدول النتائج - RTL column order (right to left: #, المعيار, الدرجة, النسبة, الحالة)
   const tableData = dimensionScores.map((ds) => ({
     data: [
-      ds.dimension.order_index.toString(),
+      renderText(ds.dimension.order_index.toString()),
       renderText(ds.dimension.name_ar),
-      `${ds.score} / ${ds.max_possible_score}`,
-      `%${Math.round(ds.percentage)}`,
+      renderText(`${ds.score} / ${ds.max_possible_score}`),
+      renderText(`${Math.round(ds.percentage)}٪`),
       renderText(getMaturityLabel(ds.percentage)),
     ],
     statusColor: getMaturityColor(ds.percentage),
@@ -487,9 +561,9 @@ export async function exportResultsToPDF(
 
   // مفتاح الألوان - RTL order
   const legendItems = [
-    { label: "مثالي", range: "%75-100", color: colors.teal },
-    { label: "ناشئ", range: "%50-74", color: colors.gold },
-    { label: "أساسي", range: "%0-49", color: colors.coral },
+    { label: "مثالي", range: "75%-100%", color: colors.teal },
+    { label: "ناشئ", range: "50%-74%", color: colors.gold },
+    { label: "أساسي", range: "0%-49%", color: colors.coral },
   ];
 
   pdf.setFont(arabicFont, "normal");
@@ -511,12 +585,9 @@ export async function exportResultsToPDF(
 
   // Helper function for RTL list items with dynamic height
   const renderListItem = (item: string, index: number, accentColor: ColorTuple) => {
-    // Process the text using the list-specific processor
-    const processedItem = processListItemText(item);
-    
-    // Calculate how many lines this text will take
+    // Calculate how many lines this text will take (after normalization)
     const maxWidth = pageWidth - margin * 2 - 28;
-    const lines = pdf.splitTextToSize(processedItem, maxWidth);
+    const lines = pdf.splitTextToSize(renderText(item), maxWidth);
     const lineHeight = 5;
     const itemHeight = Math.max(20, 12 + lines.length * lineHeight);
     
@@ -535,9 +606,9 @@ export async function exportResultsToPDF(
     pdf.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
     pdf.circle(pageWidth - margin - 12, yPos + 4, 4, "F");
     pdf.setTextColor(255, 255, 255);
-    pdf.setFont("helvetica", "bold");
+    pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(8);
-    pdf.text(`${index + 1}`, pageWidth - margin - 12, yPos + 6, { align: "center" });
+    pdf.text(renderText(`${index + 1}`), pageWidth - margin - 12, yPos + 6, { align: "center" });
 
     // النص (يمين الرقم) - support multi-line
     pdf.setFont(arabicFont, "normal");
@@ -554,30 +625,30 @@ export async function exportResultsToPDF(
   };
 
   // نقاط القوة
-  if (strengths.length > 0) {
+  if (cleanedStrengths.length > 0) {
     checkPageBreak(45); // Ensure space for title + at least one item
     drawSectionTitle("نقاط القوة", colors.teal);
-    strengths.slice(0, 5).forEach((item, index) => {
+    cleanedStrengths.slice(0, 5).forEach((item, index) => {
       renderListItem(item, index, colors.teal);
     });
     yPos += 12;
   }
 
   // فرص التحسين
-  if (opportunities.length > 0) {
+  if (cleanedOpportunities.length > 0) {
     checkPageBreak(45); // Ensure space for title + at least one item
     drawSectionTitle("فرص التحسين", colors.gold);
-    opportunities.slice(0, 5).forEach((item, index) => {
+    cleanedOpportunities.slice(0, 5).forEach((item, index) => {
       renderListItem(item, index, colors.gold);
     });
     yPos += 12;
   }
 
   // التوصيات
-  if (recommendations.length > 0) {
+  if (cleanedRecommendations.length > 0) {
     checkPageBreak(45); // Ensure space for title + at least one item
     drawSectionTitle("التوصيات العملية", colors.primary);
-    recommendations.slice(0, 6).forEach((item, index) => {
+    cleanedRecommendations.slice(0, 6).forEach((item, index) => {
       renderListItem(item, index, colors.primary);
     });
   }
@@ -607,9 +678,9 @@ export async function exportResultsToPDF(
     pdf.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
     pdf.roundedRect(pageWidth - margin - 20, pageHeight - 14, 20, 8, 2, 2, "F");
     pdf.setTextColor(255, 255, 255);
-    pdf.setFont("helvetica", "bold");
+    pdf.setFont(arabicFont, "normal");
     pdf.setFontSize(7);
-    pdf.text(`${i} / ${pageCount}`, pageWidth - margin - 10, pageHeight - 9, { align: "center" });
+    pdf.text(renderText(`${i} / ${pageCount}`), pageWidth - margin - 10, pageHeight - 9, { align: "center" });
 
     // اسم المنظمة (على اليسار - RTL)
     if (organization) {
