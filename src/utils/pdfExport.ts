@@ -509,14 +509,14 @@ export async function exportResultsToPDF(
 
   drawSectionTitle("تفاصيل نتائج المعايير");
 
-  // جدول النتائج - RTL column order (right to left: #, المعيار, الدرجة, النسبة, الحالة)
+  // جدول النتائج - RTL column order (right to left: الحالة, النسبة, الدرجة, المعيار, #)
   const tableData = dimensionScores.map((ds) => ({
     data: [
-      renderText(ds.dimension.order_index.toString()),
-      renderText(ds.dimension.name_ar),
-      renderText(`${ds.score} / ${ds.max_possible_score}`),
-      renderText(`${Math.round(ds.percentage)}٪`),
       renderText(getMaturityLabel(ds.percentage)),
+      renderText(`${Math.round(ds.percentage)}٪`),
+      renderText(`${ds.score} / ${ds.max_possible_score}`),
+      renderText(ds.dimension.name_ar),
+      renderText(ds.dimension.order_index.toString()),
     ],
     statusColor: getMaturityColor(ds.percentage),
     percentage: ds.percentage,
@@ -524,7 +524,7 @@ export async function exportResultsToPDF(
 
   const tableOptions: UserOptions = {
     startY: yPos,
-    head: [["#", renderText("المعيار"), renderText("الدرجة"), renderText("النسبة"), renderText("الحالة")]],
+    head: [[renderText("الحالة"), renderText("النسبة"), renderText("الدرجة"), renderText("المعيار"), "#"]],
     body: tableData.map((row) => row.data),
     theme: "plain",
     styles: {
@@ -554,25 +554,25 @@ export async function exportResultsToPDF(
       fillColor: colors.bgLight,
     },
     columnStyles: {
-      0: { cellWidth: 14, halign: "center", fillColor: colors.bgLight },
-      1: { cellWidth: 78, halign: "right" },
+      0: { cellWidth: 26, halign: "center" },
+      1: { cellWidth: 22, halign: "center" },
       2: { cellWidth: 28, halign: "center" },
-      3: { cellWidth: 22, halign: "center" },
-      4: { cellWidth: 26, halign: "center" },
+      3: { cellWidth: 78, halign: "right" },
+      4: { cellWidth: 14, halign: "center", fillColor: colors.bgLight },
     },
     margin: { left: margin, right: margin },
     tableWidth: "auto",
     didDrawCell: (data) => {
-      // Status color indicator
-      if (data.section === "body" && data.column.index === 4) {
+      // Status color indicator (now column 0 after RTL reversal)
+      if (data.section === "body" && data.column.index === 0) {
         const rowIndex = data.row.index;
         const statusColor = tableData[rowIndex]?.statusColor || colors.textMuted;
         pdf.setFillColor(statusColor[0], statusColor[1], statusColor[2]);
-        pdf.circle(data.cell.x + 5, data.cell.y + data.cell.height / 2, 2, "F");
+        pdf.circle(data.cell.x + data.cell.width - 5, data.cell.y + data.cell.height / 2, 2, "F");
       }
 
-      // Progress bar in percentage column
-      if (data.section === "body" && data.column.index === 3) {
+      // Progress bar in percentage column (now column 1 after RTL reversal)
+      if (data.section === "body" && data.column.index === 1) {
         const rowIndex = data.row.index;
         const percentage = tableData[rowIndex]?.percentage || 0;
         const barColor = tableData[rowIndex]?.statusColor || colors.textMuted;
