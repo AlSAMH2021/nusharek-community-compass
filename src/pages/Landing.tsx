@@ -2,23 +2,23 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { NusharekLogo } from "@/components/NusharekLogo";
-import { 
-  Target, 
-  Goal, 
-  Layers, 
-  Users, 
-  Building, 
-  Pencil, 
-  Play, 
-  MessageSquare, 
-  ClipboardCheck, 
-  Eye, 
+import {
+  Target,
+  Goal,
+  Layers,
+  Users,
+  Building,
+  Pencil,
+  Play,
+  MessageSquare,
+  ClipboardCheck,
+  Eye,
   FileText,
   ArrowLeft,
   CheckCircle,
   Building2,
   TrendingUp,
-  Lightbulb
+  Lightbulb,
 } from "lucide-react";
 
 // المحاور الـ 11 للتقييم حسب قاعدة البيانات
@@ -100,9 +100,24 @@ const features = [
 
 // مستويات النضج الثلاثة حسب التقييم
 const maturityLevels = [
-  { level: "أساسي", range: "0-49%", color: "bg-level-beginner", description: "المستوى الأول في رحلة المشاركة المجتمعية، يتطلب بناء الأسس والقدرات" },
-  { level: "ناشئ", range: "50-74%", color: "bg-level-developing", description: "مرحلة النمو والتطور في ممارسات المشاركة المجتمعية" },
-  { level: "مثالي", range: "75-100%", color: "bg-level-leading", description: "نموذج متميز ورائد في تطبيق أفضل ممارسات المشاركة المجتمعية" },
+  {
+    level: "أساسي",
+    range: "0-49%",
+    color: "bg-level-beginner",
+    description: "المستوى الأول في رحلة المشاركة المجتمعية، يتطلب بناء الأسس والقدرات",
+  },
+  {
+    level: "ناشئ",
+    range: "50-74%",
+    color: "bg-level-developing",
+    description: "مرحلة النمو والتطور في ممارسات المشاركة المجتمعية",
+  },
+  {
+    level: "مثالي",
+    range: "75-100%",
+    color: "bg-level-leading",
+    description: "نموذج متميز ورائد في تطبيق أفضل ممارسات المشاركة المجتمعية",
+  },
 ];
 
 export default function Landing() {
@@ -141,7 +156,11 @@ export default function Landing() {
                   <ArrowLeft className="mr-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8 bg-white/10 border-white/30 hover:bg-white/20">
+              <Button
+                size="lg"
+                variant="outline"
+                className="text-lg px-8 bg-white/10 border-white/30 hover:bg-white/20"
+              >
                 <a href="#dimensions">تعرّف على المحاور</a>
               </Button>
             </div>
@@ -214,7 +233,7 @@ export default function Landing() {
               اكتشف موقع منظمتك على سلم النضج في المشاركة المجتمعية
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {maturityLevels.map((level, index) => (
               <Card key={index} className="relative overflow-hidden">
                 <div className={`absolute top-0 right-0 left-0 h-2 ${level.color}`} />
@@ -244,7 +263,10 @@ export default function Landing() {
               { icon: Target, title: "القطاع الخاص" },
               { icon: Lightbulb, title: "المبادرات المجتمعية" },
             ].map((audience, index) => (
-              <div key={index} className="flex flex-col items-center text-center p-6 rounded-xl bg-muted/50 hover:bg-muted transition-colors">
+              <div
+                key={index}
+                className="flex flex-col items-center text-center p-6 rounded-xl bg-muted/50 hover:bg-muted transition-colors"
+              >
                 <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
                   <audience.icon className="h-7 w-7 text-primary" />
                 </div>
@@ -258,9 +280,7 @@ export default function Landing() {
       {/* CTA Section */}
       <section className="py-24 gradient-primary text-white">
         <div className="container text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            ابدأ رحلة التطوير اليوم
-          </h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">ابدأ رحلة التطوير اليوم</h2>
           <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
             سجّل منظمتك الآن وابدأ التقييم الذاتي لتحسين ممارسات المشاركة المجتمعية
           </p>
